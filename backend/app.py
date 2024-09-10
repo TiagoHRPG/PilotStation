@@ -35,6 +35,12 @@ class App:
         )
 
         self.router.add_api_route(
+            path="/modes",
+            endpoint=self.get_available_modes,
+            methods=["GET"]
+        )
+
+        self.router.add_api_route(
             path="/set_mode/{mode}",
             endpoint=self.set_mode,
             methods=["GET"]
@@ -59,6 +65,15 @@ class App:
         )
 
     def connect(self, connection_string: str):
+        """
+        Connects to the drone using the provided connection string.
+        Args:
+            connection_string (str): The connection string used to connect to the drone.
+        Returns:
+            dict: A dictionary containing a message indicating the connection status.
+        Raises:
+            HTTPException: If the drone is already connected or if the connection fails.
+        """
         try:
             self.drone.connect(connection_string)
             self.drone.run_message_receiver_threads()
@@ -105,6 +120,14 @@ class App:
         
         return {"message": "Landing"}
     
+    def get_available_modes(self):
+        try:
+            return self.drone.get_available_modes()
+        except exceptions.DroneNotConnectedException as e:
+            return HTTPException(status_code=400, detail=str(e))
+        except:
+            return HTTPException(status_code=401, detail="Unknown error")
+
     def set_mode(self, mode: str):
         try:
             self.drone.set_mode(mode)
@@ -124,11 +147,10 @@ class App:
 
     def drone_info(self):
         return self.drone.get_drone_info()
-    
+
     def drone_parameters(self):
         return self.drone.get_all_parameters()
     
-
 application = App()
 
 router = application.router

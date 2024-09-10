@@ -21,6 +21,7 @@ interface DroneInfoInterface {
         pitch: Number;
         yaw: Number;
     }
+    is_ekf_ok: Boolean;
 }
 
 export class DroneInfo implements DroneInfoInterface {
@@ -46,6 +47,7 @@ export class DroneInfo implements DroneInfoInterface {
         pitch: Number;
         yaw: Number;
     }
+    is_ekf_ok: Boolean = false;
 
     constructor(
         battery_level: Number = 0, 
@@ -54,7 +56,8 @@ export class DroneInfo implements DroneInfoInterface {
         armed: Boolean = false, 
         mode: string = '', 
         vfr: { airspeed: Number; groundspeed: Number; heading: Number; throttle: Number; altitude: Number; climb: Number; } = { airspeed: 0, groundspeed: 0, heading: 0, throttle: 0, altitude: 0, climb: 0 },
-        attitude: { roll: Number; pitch: Number; yaw: Number; } = { roll: 0, pitch: 0, yaw: 0 }
+        attitude: { roll: Number; pitch: Number; yaw: Number; } = { roll: 0, pitch: 0, yaw: 0 },
+        is_ekf_ok: Boolean = false
     ) {   
         this.battery_level = battery_level;
         this.position = position;
@@ -63,6 +66,7 @@ export class DroneInfo implements DroneInfoInterface {
         this.mode = mode;
         this.vfr = vfr;
         this.attitude = attitude;
+        this.is_ekf_ok = is_ekf_ok;
     }
 
 }

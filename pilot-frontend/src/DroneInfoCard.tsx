@@ -21,6 +21,7 @@ const DroneInfoCard: React.FC<DroneInfoCardProps> = ({ info }) => {
         <p><strong>Armed:</strong> {String(info.armed)}</p>
 
         <p><strong>Battery:</strong> {String(info.battery_level)}</p>
+        <p><strong>EKF OK:</strong> {String(info.is_ekf_ok)}</p>
     </div>
   );
 };

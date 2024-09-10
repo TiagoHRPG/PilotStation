@@ -21,17 +21,32 @@ class Point:
 class BatteryStatus:
     def __init__(self, level: int):
         self.level : int = level
+    
+class SystemBaseMode():
+    def __init__(self) -> None:
+        self.stabilize_mode_enabled : bool = False
+        self.auto_mode_enabled : bool = False
+
+        self.manual_input_enabled = False
+    
+    def update(self, base_mode: int) -> None:
+        # guided mode enabled flag not working properly
+        self.stabilize_mode_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_STABILIZE_ENABLED)
+        self.auto_mode_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_AUTO_ENABLED)
+        self.manual_input_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
+    
 
 class Drone:
     def __init__(self):
         self.connection = None
+        self.system_base_mode = SystemBaseMode()
+
         self.message_queue = queue.Queue(100)
         self.read_frequency = 1000
 
         self.position : Point = Point(0, 0, 0)  
         self.waypoint_distance = 0
-
-        self.armed = False
+        self._armed = False
         self.mode = 'STABILIZE'
 
         self.vfr = {
@@ -69,18 +84,13 @@ class Drone:
         self.receiving_params = False
         self.param_count = 0
 
-    def get_drone_info(self):
-        drone_info = {
-            'battery_level': self.battery_status.level,
-            'position': self.position.__dict__(),
-            'waypoint_distance': self.waypoint_distance,
-            'armed': self.armed,
-            'mode': self.mode,
-            'vfr': self.vfr,
-            'attitude': self.attitude
-        }
+    @property
+    def armed(self):   
+        return self._armed
 
-        return drone_info
+    @armed.setter
+    def armed(self, value: bool):
+        self._armed = value
     
     def is_ekf_ok(self, msg) -> bool:
         attitude_ok = bool(msg.flags & mavutil.mavlink.EKF_ATTITUDE)
@@ -107,7 +117,8 @@ class Drone:
         elif msg.get_type() == 'BATTERY_STATUS':
             self.battery_status.level = msg.battery_remaining
         elif msg.get_type() == 'HEARTBEAT' and self._is_heartbeat_from_quadrotor(msg):
-            self.armed = self._is_armed(msg)
+            self._armed = self._is_armed(msg)
+            self.system_base_mode.update(msg.base_mode)
         elif msg.get_type() == 'VFR_HUD':
             self.vfr['airspeed'] = msg.airspeed
             self.vfr['groundspeed'] = msg.groundspeed
@@ -167,7 +178,7 @@ class Drone:
         #msg = self.connection.recv_match(type='AUTOPILOT_VERSION', blocking=True)
         self.parameters, self.param_count = parameter_retrival.retrieve_all_params(self.connection)
 
-    def wait_arm_ack(self, timeout: float = 0.5) -> None:
+    def _wait_arm_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
             if self.armed_ack:
@@ -177,7 +188,7 @@ class Drone:
 
         raise exceptions.ACKTimeoutException("Timeout waiting for arming ACK")
     
-    def wait_takeoff_ack(self, timeout: float = 0.5) -> None:
+    def _wait_takeoff_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
             if self.takeoff_ack:
@@ -187,7 +198,7 @@ class Drone:
 
         raise exceptions.ACKTimeoutException("Timeout waiting for takeoff ACK")
 
-    def wait_for_param_update(self, timeout: float = 0.5) -> None:
+    def _wait_for_param_update(self, timeout: float = 0.5) -> None:
         start_time = time.time()   
         old_len_parameters = len(self.parameters)
         while time.time() - start_time < timeout:
@@ -197,7 +208,6 @@ class Drone:
                 start_time = time.time()
                 old_len_parameters = len(self.parameters)
     
-        
     def arm(self) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
@@ -205,7 +215,7 @@ class Drone:
 
         mav.arm(self.connection)
 
-        self.wait_arm_ack(0.5)
+        self._wait_arm_ack(0.5)
 
     def takeoff(self, height: float) -> None:
         if self.connection is None:
@@ -214,14 +224,19 @@ class Drone:
         
         mav.takeoff(self.connection, height)
 
-        self.wait_takeoff_ack(0.5)
+        self._wait_takeoff_ack(0.5)
 
     def land(self) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
         
         mav.set_mode(self.connection, 'LAND')
-    
+
+    def get_available_modes(self) -> None:
+        if self.connection is None:
+            raise exceptions.DroneNotConnectedException()
+        return {'modes': list(self.connection.mode_mapping().keys())}
+
     def set_mode(self, mode: str | int) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
@@ -240,10 +255,22 @@ class Drone:
 
         self.connection.param_set_send(param_id, value)
 
-        self.wait_for_param_update(0.3)
+        self._wait_for_param_update(0.3)
 
         # TODO: return true or false
         print(self.parameters[param_id] == value)
 
-        
+    def get_drone_info(self):
+        drone_info = {
+            'battery_level': self.battery_status.level,
+            'position': self.position.__dict__(),
+            'waypoint_distance': self.waypoint_distance,
+            'armed': self.armed,
+            'mode': self.mode,
+            'vfr': self.vfr,
+            'attitude': self.attitude,
+            'is_ekf_ok': self.ekf_ok
+        }
+
+        return drone_info
     

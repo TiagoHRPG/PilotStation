@@ -8,13 +8,15 @@ import { DroneInfo } from '../DroneInfoInterface';
 function App() {
   const [info, setInfo] = useState(new DroneInfo());
   const [connectionString, setConnectionString] = useState('');
+  const [modes, setModes] = useState<string[]>([]);
+  const [selectedMode, setSelectedMode] = useState('');
+
 
 
   const fetchInfo = async (url: string) => {
 	try {
 	  const response = await fetch(`${baseUrl}${url}`);
 	  const data = await response.json();
-	  console.log(data);
 	  setInfo(prevInfo => {
 		return {
 		  ...prevInfo,
@@ -23,6 +25,26 @@ function App() {
 	} catch (error) {
 	  console.error('Error fetching data:', error);
 	}
+  };
+
+  const fetchModes = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/modes`);
+      const data = await response.json();
+      setModes(data.modes);
+    } catch (error) {
+      console.error('Error fetching modes:', error);
+    }
+  };
+
+  const handleModeChange = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/set_mode/${selectedMode}`);
+      const data = await response.json();
+      console.log('Mode changed:', data);
+    } catch (error) {
+      console.error('Error changing mode:', error);
+    }
   };
 
   const handleArmClick = async () => {
@@ -39,6 +61,8 @@ function App() {
 	try{
 		var response = await fetch(`${baseUrl}/connect/${connectionString}`);
 		console.log((await response.json()));
+
+		await fetchModes();
 	}
 	catch (error) {
 		console.log(error);
@@ -83,6 +107,21 @@ function App() {
 	  <div className="info">
 	  	<DroneInfoCard info={info} />
 	  </div>
+	  <div className="mode-selector">
+        <select
+          value={selectedMode}
+          onChange={(e) => setSelectedMode(e.target.value)}
+        >
+          <option value="" disabled>Select Mode</option>
+          {modes.map((mode) => (
+            <option key={mode} value={mode}>
+              {mode}
+            </option>
+          ))}
+        </select>
+        <button onClick={handleModeChange}>Change Mode</button>
+      </div>
+
 	</div>
   );
 }
