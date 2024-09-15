@@ -53,12 +53,6 @@ button:hover {
   background-color: #0056b3;
 }
 
-.info {
-  margin-top: 20px;
-  font-size: 18px;
-  color: #333;
-}
-
 .card {
   background-color: #fff;
   border-radius: 8px;
@@ -67,6 +61,10 @@ button:hover {
   margin: 20px;
   width: 300px;
   text-align: left;
+  
+  margin-top: 20px;
+  font-size: 18px;
+  color: #333;
 }
 
 .card h3 {

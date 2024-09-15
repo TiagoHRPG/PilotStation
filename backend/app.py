@@ -78,9 +78,10 @@ class App:
             self.drone.connect(connection_string)
             self.drone.run_message_receiver_threads()
         except exceptions.DroneAlreadyConnectedException as e:
-            raise HTTPException(status_code=400, detail="Drone is already connected")
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except:
-            raise HTTPException(status_code=400, detail="Could not connect to drone")
+            raise HTTPException(status_code=500, detail="Could not connect to drone")
 
         return {"message": "Connected to drone"}
     
@@ -89,11 +90,13 @@ class App:
         try:
             self.drone.arm()
         except exceptions.DroneNotConnectedException as e:
-            raise HTTPException(status_code=422, detail="Drone is not connected")
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except exceptions.ACKTimeoutException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except:
-            return HTTPException(status_code=401, detail="Unknown error")
+            raise HTTPException(status_code=500, detail="Unknown error")
         
         return {"message": "Arming"}
     
@@ -102,9 +105,11 @@ class App:
         try:
             self.drone.takeoff(height)
         except exceptions.DroneNotConnectedException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except exceptions.ACKTimeoutException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except:
             return HTTPException(status_code=401, detail="Unknown error")
 
@@ -114,9 +119,10 @@ class App:
         try:
             self.drone.land()
         except exceptions.DroneNotConnectedException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                         "type": e.__class__.__name__})
         except:
-            return HTTPException(status_code=401, detail="Unknown error")
+            raise HTTPException(status_code=401, detail="Unknown error")
         
         return {"message": "Landing"}
     
@@ -124,19 +130,19 @@ class App:
         try:
             return self.drone.get_available_modes()
         except exceptions.DroneNotConnectedException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         except:
-            return HTTPException(status_code=401, detail="Unknown error")
+            raise HTTPException(status_code=401, detail="Unknown error")
 
     def set_mode(self, mode: str):
         try:
             self.drone.set_mode(mode)
         except exceptions.DroneNotConnectedException as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         except ValueError as e:
-            return HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         except:
-            return HTTPException(status_code=401, detail="Unknown error")
+            raise HTTPException(status_code=401, detail="Unknown error")
         
         return {"message": f"Setting mode to {mode}"}
     

@@ -1,5 +1,5 @@
 import React from 'react';
-import DroneInfoInterface from './DroneInfoInterface';
+import DroneInfoInterface from '../interfaces/DroneInfoInterface';
 
 
 
@@ -18,9 +18,9 @@ const DroneInfoCard: React.FC<DroneInfoCardProps> = ({ info }) => {
         <p><strong>Mode:</strong> {info.mode}</p>
         <p><strong>Dist. to WP:</strong> {String(info.waypoint_distance)}m</p>
         <p><strong>Yaw:</strong> {String(info.vfr.heading)}º</p>
-        <p><strong>Armed:</strong> {String(info.armed)}</p>
+        <p><strong>Armed:</strong> {String(info.armed).toUpperCase()}</p>
 
-        <p><strong>Battery:</strong> {String(info.battery_level)}</p>
+        <p><strong>Battery:</strong> {String(info.battery_level)}%</p>
         <p><strong>EKF OK:</strong> {String(info.is_ekf_ok)}</p>
     </div>
   );
