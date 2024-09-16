@@ -6,7 +6,7 @@ import DroneInfoCard from '../components/DroneInfoCard';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import WorldMap from '../components/WorldMap';
 import Header from '../components/Header';
-import { convertNEDToXYZ } from '../utilities';
+import { convertNEDToXYZ, nonArmableModes } from '../utilities';
 import ModeSelector from '../components/ModeSelector';
 import { toast } from 'react-toastify';
 
@@ -15,6 +15,27 @@ function App() {
   const [connectionString, setConnectionString] = useState('');
   const [modes, setModes] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState('');
+
+  function notifyExceptions(response: Response, responseJson: Record<string, string>) {
+	if(response.status != 200 && responseJson?.type == "ACKTimeoutException"){
+		toast.warning(responseJson.response);
+	}
+	if(response.status != 200 && responseJson?.type == "DroneAlreadyConnectedException"){
+		toast.warning(responseJson.response);
+	}
+	return
+	}
+
+	function checkIfInArmableMode() {
+		console.log(info.mode);
+		if (nonArmableModes.includes(info.mode)) {
+			toast.error(`${info.mode} is not armable`);
+			return false;
+		}
+		console.log("here")
+		return true;
+	}
+
 
   const fetchInfo = async (url: string) => {
 	try {
@@ -68,6 +89,7 @@ function App() {
 
   const handleArmClick = async () => {
 	try {
+		if (!checkIfInArmableMode()) return
 	  	var response = await fetch(`${baseUrl}/arm`);
 		var responseJson: Record<string, string> = (await response.json())['detail'];
 		notifyExceptions(response, responseJson);
@@ -78,6 +100,10 @@ function App() {
 
   const handleTakeoffClick = async () => {
 	try {
+		if(!info.armed){
+			toast.error("Drone is not armed");
+			return;
+		}
 		var response = await fetch(`${baseUrl}/takeoff/1`);
 		var responseJson: Record<string, string> = (await response.json())['detail'];
 		notifyExceptions(response, responseJson);
@@ -118,13 +144,3 @@ function App() {
 }
 
 export default App;
-
-function notifyExceptions(response: Response, responseJson: Record<string, string>) {
-	if(response.status != 200 && responseJson?.type == "ACKTimeoutException"){
-		toast.warning(responseJson.response);
-	}
-	if(response.status != 200 && responseJson?.type == "DroneAlreadyConnectedException"){
-		toast.warning(responseJson.response);
-	}
-	return
-}

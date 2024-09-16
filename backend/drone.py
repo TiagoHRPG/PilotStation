@@ -1,3 +1,4 @@
+from enum import Enum
 import queue
 import time
 import exceptions
@@ -17,6 +18,13 @@ class Point:
             'y': self.y,
             'z': self.z
         }
+
+class mavResult(Enum):
+    ACCEPTED = 0
+    DENIED = 2
+    FAILED = 4
+    IDLE = -1
+
     
 class BatteryStatus:
     def __init__(self, level: int):
@@ -77,8 +85,8 @@ class Drone:
         self.parameters = dict()
 
         # commands ack
-        self.armed_ack = False
-        self.takeoff_ack = False
+        self.armed_ack : mavResult = mavResult.IDLE
+        self.takeoff_ack : mavResult = mavResult.IDLE
 
         # TODO: implement a class for parameters 
         self.receiving_params = False
@@ -155,10 +163,10 @@ class Drone:
                 if msg is not None:
                     self._update_info(msg)
                     if msg.get_type() == 'COMMAND_ACK':
-                        if msg.command == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM and msg.result == 0:
-                            self.armed_ack = True
-                        if msg.command == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF and msg.result == 0:
-                            self.takeoff_ack = True
+                        if msg.command == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM:
+                            self.armed_ack = mavResult(msg.result)
+                        if msg.command == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF:
+                            self.takeoff_ack =  mavResult(msg.result)
                     if msg.get_type() == 'PARAM_VALUE':
                         self.parameters[msg.param_id] = msg.param_value
             
@@ -181,9 +189,12 @@ class Drone:
     def _wait_arm_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.armed_ack:
-                self.armed_ack = False
+            if self.armed_ack == mavResult.ACCEPTED:
+                self.armed_ack = mavResult.IDLE
                 return
+            elif self.armed_ack in [mavResult.FAILED, mavResult.DENIED]:
+                self.armed_ack = mavResult.IDLE
+                raise exceptions.CommandFailedException("Arming failed")
             time.sleep(0.1)
 
         raise exceptions.ACKTimeoutException("Timeout waiting for arming ACK")
@@ -191,9 +202,12 @@ class Drone:
     def _wait_takeoff_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.takeoff_ack:
-                self.takeoff_ack = False
+            if self.takeoff_ack == mavResult.ACCEPTED:
+                self.takeoff_ack = mavResult.IDLE
                 return
+            elif self.takeoff_ack in [mavResult.FAILED, mavResult.DENIED]:
+                self.takeoff_ack = mavResult.IDLE
+                raise exceptions.CommandFailedException("Takeoff failed")
             time.sleep(0.1)
 
         raise exceptions.ACKTimeoutException("Timeout waiting for takeoff ACK")
@@ -211,7 +225,7 @@ class Drone:
     def arm(self) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
-        self.armed_ack = False
+        self.armed_ack = mavResult.IDLE
 
         mav.arm(self.connection)
 
@@ -220,11 +234,12 @@ class Drone:
     def takeoff(self, height: float) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
-        self.takeoff_ack = False
+        self.takeoff_ack = mavResult.IDLE
         
         mav.takeoff(self.connection, height)
 
         self._wait_takeoff_ack(0.5)
+
 
     def land(self) -> None:
         if self.connection is None:
