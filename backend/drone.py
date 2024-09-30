@@ -87,6 +87,7 @@ class Drone:
         # commands ack
         self.armed_ack : mavResult = mavResult.IDLE
         self.takeoff_ack : mavResult = mavResult.IDLE
+        self.set_mode_ack : mavResult = mavResult.IDLE
 
         # TODO: implement a class for parameters 
         self.receiving_params = False
@@ -165,8 +166,10 @@ class Drone:
                     if msg.get_type() == 'COMMAND_ACK':
                         if msg.command == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM:
                             self.armed_ack = mavResult(msg.result)
-                        if msg.command == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF:
+                        elif msg.command == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF:
                             self.takeoff_ack =  mavResult(msg.result)
+                        elif msg.command == mavutil.mavlink.MAV_CMD_DO_SET_MODE:
+                            self.set_mode_ack = mavResult(msg.result)
                     if msg.get_type() == 'PARAM_VALUE':
                         self.parameters[msg.param_id] = msg.param_value
             
@@ -211,6 +214,19 @@ class Drone:
             time.sleep(0.1)
 
         raise exceptions.ACKTimeoutException("Timeout waiting for takeoff ACK")
+
+    def _wait_set_mode_ack(self, timeout: float = 0.5) -> None:
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if self.set_mode_ack == mavResult.ACCEPTED:
+                self.set_mode_ack = mavResult.IDLE
+                return True
+            elif self.set_mode_ack in [mavResult.FAILED, mavResult.DENIED]:
+                self.set_mode_ack = mavResult.IDLE
+                return False
+            time.sleep(0.1)
+
+        raise exceptions.ACKTimeoutException("Timeout waiting for set mode ACK")
 
     def _wait_for_param_update(self, timeout: float = 0.5) -> None:
         start_time = time.time()   
@@ -257,6 +273,9 @@ class Drone:
             raise exceptions.DroneNotConnectedException()
         
         mav.set_mode(self.connection, mode)
+
+        if not self._wait_set_mode_ack(0.5):
+            raise exceptions.CommandFailedException(f"failed setting {mode} mode")
 
     def get_all_parameters(self) -> dict:
         if self.connection is None:

@@ -1,6 +1,6 @@
 
 
-export const WORLD_SIZE = 100;
+export const WORLD_SIZE = 10;
 const Ground = () => {
 
     return (

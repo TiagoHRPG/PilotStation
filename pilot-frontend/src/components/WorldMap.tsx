@@ -12,7 +12,7 @@ interface WorldMapProps {
 const Drone = ({ position }: { position: {x: number, y: number, z: number} }) => {
     return (
         <mesh position={[position.x, position.y, position.z]}>
-            <boxGeometry args={[1,1,1]} />
+            <sphereGeometry args={[0.3, 16, 16]} />
             <meshStandardMaterial color='orange' />
         </mesh>
     )
@@ -30,6 +30,9 @@ function WorldMap({ dronePosition }: WorldMapProps){
           dronePosition.z
         );
         setTrajectory((prev) => [...prev, newPosition]);
+        if (trajectory.length > 100) {
+          setTrajectory((prev) => prev.slice(1));
+        }
       }, [dronePosition]);
 
     return (

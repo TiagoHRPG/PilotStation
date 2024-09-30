@@ -6,7 +6,7 @@ import DroneInfoCard from '../components/DroneInfoCard';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import WorldMap from '../components/WorldMap';
 import Header from '../components/Header';
-import { convertNEDToXYZ, nonArmableModes } from '../utilities';
+import { convertNEDToXYZ, nonArmableModes, notifyExceptions } from '../utilities';
 import ModeSelector from '../components/ModeSelector';
 import { toast } from 'react-toastify';
 
@@ -15,16 +15,7 @@ function App() {
   const [connectionString, setConnectionString] = useState('');
   const [modes, setModes] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState('');
-
-  function notifyExceptions(response: Response, responseJson: Record<string, string>) {
-	if(response.status != 200 && responseJson?.type == "ACKTimeoutException"){
-		toast.warning(responseJson.response);
-	}
-	if(response.status != 200 && responseJson?.type == "DroneAlreadyConnectedException"){
-		toast.warning(responseJson.response);
-	}
-	return
-	}
+  const [isConnected, setIsConnected] = useState(false);
 
 	function checkIfInArmableMode() {
 		console.log(info.mode);
@@ -67,6 +58,13 @@ function App() {
 		var responseJson: Record<string, string> = (await response.json())['detail'];
 
 		notifyExceptions(response, responseJson);
+		if(response.status == 200){
+			toast.success("Connected to drone");
+			setIsConnected(true);
+		}
+		else if(responseJson?.type == "DroneAlreadyConnectedException"){
+			setIsConnected(true);
+		}
 
 		await fetchModes();
 	}
@@ -79,9 +77,14 @@ function App() {
 
   const handleModeChange = async () => {
     try {
-      const response = await fetch(`${baseUrl}/set_mode/${selectedMode}`);
-      const data = await response.json();
-      console.log('Mode changed:', data);
+		const response = await fetch(`${baseUrl}/set_mode/${selectedMode}`);
+		const responseJson = (await response.json())['detail'];
+		console.log(responseJson);
+		notifyExceptions(response, responseJson);
+		
+		if (response.status == 200) {
+			toast.success(`Mode changed to ${selectedMode}`);
+		}
     } catch (error) {
       toast.error(`Error changing mode: ${error}`);
     }
@@ -115,7 +118,8 @@ function App() {
   useEffect(() => {
 	const interval = setInterval(() => {
 		fetchInfo('/drone_info');
-	}, 100); // Atualiza a cada 0.5 segundo
+	
+	}, 200); // Atualiza a cada 0.5 segundo
 
 	return () => clearInterval(interval);
   }, []);
