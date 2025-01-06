@@ -4,12 +4,11 @@ import Ground, { WORLD_SIZE } from "./Ground";
 import { Line, OrbitControls } from "@react-three/drei";
 import './WorldMap.css';
 import { useEffect, useState } from "react";
+import { Drone } from "./DronesContext";
+import { convertNEDToXYZ } from "../utilities";
 
-interface WorldMapProps {
-    dronePosition: {x: number, y: number, z: number}
-}
 
-const Drone = ({ position }: { position: {x: number, y: number, z: number} }) => {
+const DroneObject = ({ position }: { position: {x: number, y: number, z: number} }) => {
     return (
         <mesh position={[position.x, position.y, position.z]}>
             <sphereGeometry args={[0.3, 16, 16]} />
@@ -17,38 +16,52 @@ const Drone = ({ position }: { position: {x: number, y: number, z: number} }) =>
         </mesh>
     )
 }
-
-function WorldMap({ dronePosition }: WorldMapProps){
+function WorldMap({ drones }: { drones: Drone[] }){
     const initialCameraPosition = new Vector3(2,2,2);
-    const [trajectory, setTrajectory] = useState<Vector3[]>([]);
+    const [trajectories, setTrajectories] = useState<Record<string, Vector3[]>>({});
 
 
     useEffect(() => {
-        const newPosition = new Vector3(
-          dronePosition.x,
-          dronePosition.y,
-          dronePosition.z
-        );
-        setTrajectory((prev) => [...prev, newPosition]);
-        if (trajectory.length > 100) {
-          setTrajectory((prev) => prev.slice(1));
-        }
-      }, [dronePosition]);
-
+        const newTrajectories = { ...trajectories };
+        drones.forEach((drone) => {
+          const newPosition = convertNEDToXYZ(drone.info.position);
+          const positionVector = new Vector3(
+            newPosition.x,
+            newPosition.y,
+            newPosition.z
+          );
+          if (!newTrajectories[drone.id]) {
+            newTrajectories[drone.id] = [];
+          }
+          newTrajectories[drone.id].push(positionVector);
+          if (newTrajectories[drone.id].length > 100) {
+            newTrajectories[drone.id] = newTrajectories[drone.id].slice(1);
+          }
+        });
+        setTrajectories(newTrajectories);
+      
+      }, [drones]);
+    
+      // TODO: find a way to set initial drone position
     return (
         <div className="world-map-container">
             <Canvas camera={{ position: initialCameraPosition, up: [0, 1, 0] }}>
                 <Ground />
                 <ambientLight intensity={0.6} />
                 <hemisphereLight color={'#ffffff'} groundColor={'#000000'} intensity={1} />
-                <Drone position={dronePosition}/>
+                {drones.map((drone) => (
+                    <DroneObject key={drone.id} position={convertNEDToXYZ(drone.info.position)} />
+                ))}
                 <OrbitControls />
                 <gridHelper args={[WORLD_SIZE, 50]} />
-                <Line
-                points={trajectory}
-                color="blue"
-                lineWidth={2}
-                />
+                {Object.keys(trajectories).map((droneId) => (
+                    <Line
+                        key={droneId}
+                        points={trajectories[droneId]}
+                        color="blue"
+                        lineWidth={2}
+                    />
+                ))}
             </Canvas>
         </div>)
 }

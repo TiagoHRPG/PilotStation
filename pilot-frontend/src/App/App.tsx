@@ -1,149 +1,105 @@
-import { useState, useEffect } from 'react';
-import './App.css';
-
-import baseUrl from '../api/api';
-import DroneInfoCard from '../components/DroneInfoCard';
-import { DroneInfo } from '../interfaces/DroneInfoInterface';
-import WorldMap from '../components/WorldMap';
-import Header from '../components/Header';
-import { convertNEDToXYZ, nonArmableModes, notifyExceptions } from '../utilities';
-import ModeSelector from '../components/ModeSelector';
-import { toast } from 'react-toastify';
+import { useEffect, useState } from "react";
+import "./App.css";
+import DroneCard from "../components/DroneCard";
+import baseUrl from "../api/api";
+import { toast } from "react-toastify";
+import WorldMap from "../components/WorldMap";
+import { Drone } from "../components/DronesContext";
+import { v4 as uuid } from "uuid";
+import AddDroneForm from "../components/AddDroneForm";
+import { ExceptionTypes } from "../enumerators/exceptionTypes";
 
 function App() {
-  const [info, setInfo] = useState(new DroneInfo());
-  const [connectionString, setConnectionString] = useState('');
-  const [modes, setModes] = useState<string[]>([]);
-  const [selectedMode, setSelectedMode] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+  const [drones, setDrones] = useState<Drone[]>([]);
 
-	function checkIfInArmableMode() {
-		console.log(info.mode);
-		if (nonArmableModes.includes(info.mode)) {
-			toast.error(`${info.mode} is not armable`);
-			return false;
-		}
-		console.log("here")
-		return true;
-	}
+  const removeDrone = (id: string) => {
+    setDrones(drones.filter((drone) => drone.id !== id));
+  }
 
+  const connectDrone = (connectionString: string) =>  {
+    
+    fetch(`${baseUrl}/connect/${connectionString}`)
+      .then(async (response) => {
+        const data = await response.json();
+        
+        if (response.status != 200 && data.detail.type != ExceptionTypes.DroneAlreadyConnectedException) {
+          toast.error("Error connecting to drone");
+          return;
+        } 
+        
+        if (drones.some((drone) => drone.connectionString === connectionString)) {
+          toast.warning("Drone already connected");
+          return;
+        }
 
-  const fetchInfo = async (url: string) => {
-	try {
-	  const response = await fetch(`${baseUrl}${url}`);
-	  const data = await response.json();
-	  setInfo(prevInfo => {
-		return {
-		  ...prevInfo,
-		  ...data
-	}});
-	} catch (error) {
-	  console.error('Error fetching data:', error);
-	}
+        const newDrone: Drone = {
+          id: uuid(),
+          connectionString: connectionString,
+          info: {
+            armed: false,
+            mode: "",
+            position: { x: 0, y: 0, z: 0},
+            battery_level: 0,
+            waypoint_distance: 0,
+            vfr: { airspeed: 0, groundspeed: 0, heading: 0, throttle: 0, altitude: 0, climb: 0 },
+            attitude: { pitch: 0, roll: 0, yaw: 0 },
+            is_ekf_ok: false
+          },
+        }
+        setDrones([...drones, newDrone]); 
+
+        toast.success("Connected to drone");
+      })
+      .catch(() => {
+        toast.error("Error connecting to drone");
+      });
   };
 
-  const fetchModes = async () => {
+  const fetchDroneInfo = async (drone: Drone) => {
     try {
-      const response = await fetch(`${baseUrl}/modes`);
+      const response = await fetch(`${baseUrl}/${drone.connectionString}/drone_info`);
       const data = await response.json();
-      setModes(data.modes);
-    } catch (error) {
-      console.error('Error fetching modes:', error);
+      setDrones(drones.map((d) => {
+        if (d.id === drone.id) {
+          return { ...d, info: data };
+        }
+        return d;
+      }));
+    } 
+    catch (error) {
+      console.error('Error fetching data:', error);
     }
-  };
-
-  const handleConnectClick = async () => {
-	try{
-		var response = await fetch(`${baseUrl}/connect/${connectionString}`);
-		var responseJson: Record<string, string> = (await response.json())['detail'];
-
-		notifyExceptions(response, responseJson);
-		if(response.status == 200){
-			toast.success("Connected to drone");
-			setIsConnected(true);
-		}
-		else if(responseJson?.type == "DroneAlreadyConnectedException"){
-			setIsConnected(true);
-		}
-
-		await fetchModes();
-	}
-	catch (error) {
-		console.log(error);
-	  	alert(`Connection failed`);
-	}
-	
-  };
-
-  const handleModeChange = async () => {
-    try {
-		const response = await fetch(`${baseUrl}/set_mode/${selectedMode}`);
-		const responseJson = (await response.json())['detail'];
-		console.log(responseJson);
-		notifyExceptions(response, responseJson);
-		
-		if (response.status == 200) {
-			toast.success(`Mode changed to ${selectedMode}`);
-		}
-    } catch (error) {
-      toast.error(`Error changing mode: ${error}`);
-    }
-  };
-
-  const handleArmClick = async () => {
-	try {
-		if (!checkIfInArmableMode()) return
-	  	var response = await fetch(`${baseUrl}/arm`);
-		var responseJson: Record<string, string> = (await response.json())['detail'];
-		notifyExceptions(response, responseJson);
-	} catch (error) {
-	  alert(`Error while arming: ${error}`);
-	}
-  };
-
-  const handleTakeoffClick = async () => {
-	try {
-		if(!info.armed){
-			toast.error("Drone is not armed");
-			return;
-		}
-		var response = await fetch(`${baseUrl}/takeoff/1`);
-		var responseJson: Record<string, string> = (await response.json())['detail'];
-		notifyExceptions(response, responseJson);
-	} catch (error) {
-	  alert("Error while taking off");
-	}
-  };
+  }
 
   useEffect(() => {
-	const interval = setInterval(() => {
-		fetchInfo('/drone_info');
-	
-	}, 200); // Atualiza a cada 0.5 segundo
+      const interval = setInterval(() => {
+        drones.forEach(async (drone) => {
+          fetchDroneInfo(drone); 
+        });
+      }, 300);
+      return () => clearInterval(interval);
+  }, [drones]);
 
-	return () => clearInterval(interval);
-  }, []);
+  const disconnectDrone = async (id: string) => {
+    var response = await fetch(`${baseUrl}/${id}/disconnect`);
+    
+    if (response.status != 200) {
+      toast.error("Error disconnecting from drone");
+      return;
+    }
+    removeDrone(id);
+  };
 
   return (
-	<div className='container'>
-		<Header
-			connectionString={connectionString}
-			setConnectionString={setConnectionString}
-			handleConnectClick={handleConnectClick}
-		/>
-		<div>
-			<button onClick={handleArmClick}>Arm</button>
-			<button onClick={handleTakeoffClick}>Takeoff</button>
-		</div>
-		<ModeSelector
-			modes={modes}
-			selectedMode={selectedMode}
-			setSelectedMode={setSelectedMode}
-			handleModeChange={handleModeChange}
-      	/>
-		<DroneInfoCard info={info} />
-		<WorldMap dronePosition={convertNEDToXYZ(info.position)}/>
-	</div>
+    <div className="app-container">
+      <AddDroneForm onAddDrone={connectDrone}/>
+      <div className="drone-cards-container">
+        {drones.map((drone) => (
+          <DroneCard key={drone.id} drone={drone} removeDrone={disconnectDrone}/>
+        ))}
+      </div>
+      <WorldMap drones={drones} />
+    </div>
   );
 }
 

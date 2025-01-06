@@ -1,89 +1,11 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #fff;
+.app-container {
   padding: 20px;
-  box-sizing: border-box;
+  text-align: center;
 }
 
-.header {
-  width: 100%;
+.drone-cards-container {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-}
-
-.header input {
-  margin-left: 10px;
-  padding: 5px;
-  border-radius: 5px;
-  border: none;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-.card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin: 20px;
-  width: 300px;
-  text-align: left;
-  
-  margin-top: 20px;
-  font-size: 18px;
-  color: #333;
-}
-
-.card h3 {
-  margin-top: 0;
-}
-
-.card p {
-  margin: 5px 0;
-}
-
-.mode-selector {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-}
-
-.mode-selector select {
-  padding: 10px;
-  margin-right: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
