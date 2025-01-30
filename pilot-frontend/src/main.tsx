@@ -4,7 +4,7 @@ import App from './App/App.tsx'
 import './index.css'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { DroneProvider } from './components/DronesContext.tsx';
+import { DroneProvider } from './contexts/DronesContext.tsx';
 
 
 createRoot(document.getElementById('root')!).render(

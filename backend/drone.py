@@ -100,7 +100,7 @@ class EkfStatusReport:
 
 class DroneParameters:
     def __init__(self):
-        self.parameters = dict()
+        self.parameters : dict = dict()
 
     def update(self, msg):
         self.parameters[msg.param_id] = msg.param_value

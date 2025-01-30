@@ -13,7 +13,7 @@ class App:
             msg = None
 
             for drone in self.drones.values():
-                if drone.connected and drone.param_count != 0:
+                if drone.connected and drone.drone_parameters.param_count() != 0:
                     try:
                         msg = drone.connection.recv_match()
                         if msg is not None:
@@ -103,7 +103,7 @@ class App:
                 if connection_string not in self.drones:
                     self.drones[connection_string] = Drone()
                 self.drones[connection_string].connect(connection_string)
-                self.drones[connection_string].parameters, self.drones[connection_string].param_count = parameter_retrival.retrieve_all_params(self.drones[connection_string].connection)
+                self.drones[connection_string].drone_parameters.parameters, _ = parameter_retrival.retrieve_all_params(self.drones[connection_string].connection)
         except exceptions.DroneAlreadyConnectedException as e:
             raise HTTPException(status_code=400, detail={"response": str(e), 
                                                          "type": e.__class__.__name__})

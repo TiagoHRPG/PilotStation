@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import baseUrl from '../api/api';
 import { toast } from 'react-toastify';
 import DroneInfoCard from './DroneInfoCard';
@@ -6,7 +6,7 @@ import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import ModeSelector from './ModeSelector';
 import { nonArmableModes, notifyExceptions } from '../utilities';
 import './DroneCard.css';
-import { Drone, useDroneContext } from './DronesContext';
+import { Drone } from '../contexts/DronesContext';
 
 interface DroneCardProps {
   drone: Drone;
@@ -93,22 +93,21 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
 
   return (
     <div className="drone-card">
-      <div>
-        <h3>{drone?.connectionString}</h3>
-        <button onClick={handleRemoveCLick}>Remove</button>
+      <div className='connection-string-container'>
+        <h3 className="connection-string">{drone?.connectionString}</h3>
+        <button className="remove-button" onClick={handleRemoveCLick}>Remove</button>
       </div>
-      <div>
-          <ModeSelector
-              modes={modes}
-              selectedMode={selectedMode}
-              setSelectedMode={setSelectedMode}
-              handleModeChange={handleModeChange}
-          />
+      <ModeSelector
+          modes={modes}
+          selectedMode={selectedMode}
+          setSelectedMode={setSelectedMode}
+          handleModeChange={handleModeChange}
+      />
+      <div className='drone-actions'>
         <button onClick={handleArmClick}>Arm</button>
         <button onClick={handleTakeoffClick}>Takeoff</button>
-        
-        <DroneInfoCard info={info} />
       </div>
+      <DroneInfoCard info={info} />
     </div>
   );
 };

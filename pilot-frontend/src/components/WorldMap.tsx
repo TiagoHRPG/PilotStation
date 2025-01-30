@@ -4,10 +4,11 @@ import Ground, { WORLD_SIZE } from "./Ground";
 import { Line, OrbitControls } from "@react-three/drei";
 import './WorldMap.css';
 import { useEffect, useState } from "react";
-import { Drone } from "./DronesContext";
+import { Drone } from "../contexts/DronesContext";
 import { convertNEDToXYZ } from "../utilities";
 
 
+// TODO: add different colors to each drone and trajectories 
 const DroneObject = ({ position }: { position: {x: number, y: number, z: number} }) => {
     return (
         <mesh position={[position.x, position.y, position.z]}>
@@ -22,15 +23,17 @@ function WorldMap({ drones }: { drones: Drone[] }){
 
 
     useEffect(() => {
+      console.log(drones);
         const newTrajectories = { ...trajectories };
         drones.forEach((drone) => {
-          const newPosition = convertNEDToXYZ(drone.info.position);
+          const newPosition = convertNEDToXYZ(drone.worldPosition);
           const positionVector = new Vector3(
             newPosition.x,
             newPosition.y,
             newPosition.z
           );
           if (!newTrajectories[drone.id]) {
+            console.log(drone.id);
             newTrajectories[drone.id] = [];
           }
           newTrajectories[drone.id].push(positionVector);
@@ -42,7 +45,6 @@ function WorldMap({ drones }: { drones: Drone[] }){
       
       }, [drones]);
     
-      // TODO: find a way to set initial drone position
     return (
         <div className="world-map-container">
             <Canvas camera={{ position: initialCameraPosition, up: [0, 1, 0] }}>
@@ -50,7 +52,7 @@ function WorldMap({ drones }: { drones: Drone[] }){
                 <ambientLight intensity={0.6} />
                 <hemisphereLight color={'#ffffff'} groundColor={'#000000'} intensity={1} />
                 {drones.map((drone) => (
-                    <DroneObject key={drone.id} position={convertNEDToXYZ(drone.info.position)} />
+                    <DroneObject key={drone.id} position={convertNEDToXYZ(drone.worldPosition)} />
                 ))}
                 <OrbitControls />
                 <gridHelper args={[WORLD_SIZE, 50]} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import './ModeSelector.css';
 
 interface ModeSelectorProps {
   modes: string[];
@@ -14,8 +15,8 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
   handleModeChange,
 }) => {
   return (
-    <div className="mode-selector">
-      <select
+    <div className="mode-selector-container">
+      <select className="mode-selector-dropdown"
         value={selectedMode}
         onChange={(e) => setSelectedMode(e.target.value)}
       >
@@ -26,7 +27,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
           </option>
         ))}
       </select>
-      <button onClick={handleModeChange}>Change Mode</button>
+      <button className="mode-selector-button" onClick={handleModeChange}>Change Mode</button>
     </div>
   );
 };

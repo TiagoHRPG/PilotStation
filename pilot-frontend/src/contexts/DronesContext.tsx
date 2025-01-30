@@ -10,6 +10,7 @@ export interface Drone {
   id: string;
   connectionString: string;
   info: DroneInfo;
+  worldPosition: { x: number, y: number, z: number };
 }
 
 interface DroneContextProps {

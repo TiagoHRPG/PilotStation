@@ -4,23 +4,22 @@ import DroneCard from "../components/DroneCard";
 import baseUrl from "../api/api";
 import { toast } from "react-toastify";
 import WorldMap from "../components/WorldMap";
-import { Drone } from "../components/DronesContext";
+import { Drone } from "../contexts/DronesContext";
 import { v4 as uuid } from "uuid";
 import AddDroneForm from "../components/AddDroneForm";
 import { ExceptionTypes } from "../enumerators/exceptionTypes";
+import { SideBar } from "../components/SideBar";
 
 function App() {
-  const [drones, setDrones] = useState<Drone[]>([]);
+  // TODO: ADD MAVLINK TERMINAL SUPPORT
+  const [drones, setDrones] = useState<Drone[]>(new Array<Drone>());
 
-  const removeDrone = (id: string) => {
-    setDrones(drones.filter((drone) => drone.id !== id));
-  }
-
-  const connectDrone = (connectionString: string) =>  {
+  const connectDrone = (connectionString: string, initialPosition: {x: number; y: number; z: number; }) =>  {
     
     fetch(`${baseUrl}/connect/${connectionString}`)
       .then(async (response) => {
         const data = await response.json();
+        toast.success(data)
         
         if (response.status != 200 && data.detail.type != ExceptionTypes.DroneAlreadyConnectedException) {
           toast.error("Error connecting to drone");
@@ -45,6 +44,7 @@ function App() {
             attitude: { pitch: 0, roll: 0, yaw: 0 },
             is_ekf_ok: false
           },
+          worldPosition: { x: initialPosition.x, y: initialPosition.y, z: initialPosition.z }
         }
         setDrones([...drones, newDrone]); 
 
@@ -61,7 +61,8 @@ function App() {
       const data = await response.json();
       setDrones(drones.map((d) => {
         if (d.id === drone.id) {
-          return { ...d, info: data };
+          const position_delta = { x: data.position.x - d.info.position.x, y: data.position.y - d.info.position.y, z: data.position.z - d.info.position.z };
+          return { ...d, info: data, worldPosition: { x: d.worldPosition.x + position_delta.x, y: d.worldPosition.y + position_delta.y, z: d.worldPosition.z + position_delta.z } };  
         }
         return d;
       }));
@@ -70,15 +71,6 @@ function App() {
       console.error('Error fetching data:', error);
     }
   }
-
-  useEffect(() => {
-      const interval = setInterval(() => {
-        drones.forEach(async (drone) => {
-          fetchDroneInfo(drone); 
-        });
-      }, 300);
-      return () => clearInterval(interval);
-  }, [drones]);
 
   const disconnectDrone = async (id: string) => {
     var response = await fetch(`${baseUrl}/${id}/disconnect`);
@@ -90,16 +82,32 @@ function App() {
     removeDrone(id);
   };
 
+  const removeDrone = (id: string) => {
+    setDrones(drones.filter((drone) => drone.id !== id));
+  }
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+        drones.forEach(async (drone) => {
+          fetchDroneInfo(drone); 
+        });
+      }, 300);
+      return () => clearInterval(interval);
+  }, [drones]);
+
   return (
-    <div className="app-container">
-      <AddDroneForm onAddDrone={connectDrone}/>
-      <div className="drone-cards-container">
-        {drones.map((drone) => (
-          <DroneCard key={drone.id} drone={drone} removeDrone={disconnectDrone}/>
-        ))}
+    <div className="App">
+      <div className="main-interface">
+        <AddDroneForm onAddDrone={connectDrone} isFirstDrone={drones.length === 0}/>
+        <div className="drone-cards-container">
+          {drones.map((drone) => (
+            <DroneCard key={drone.id} drone={drone} removeDrone={disconnectDrone}/>
+          ))}
+        </div>
+        <WorldMap drones={drones} />
       </div>
-      <WorldMap drones={drones} />
     </div>
+    
   );
 }
 

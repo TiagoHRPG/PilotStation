@@ -1,7 +1,20 @@
-.app-container {
-  padding: 20px;
-  text-align: center;
+.main-interface {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
 }
+
+.App{
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+  margin: 0;
+}
+
 
 .drone-cards-container {
   display: flex;
