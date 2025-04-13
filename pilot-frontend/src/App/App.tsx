@@ -8,7 +8,6 @@ import { Drone } from "../contexts/DronesContext";
 import { v4 as uuid } from "uuid";
 import AddDroneForm from "../components/AddDroneForm";
 import { ExceptionTypes } from "../enumerators/exceptionTypes";
-import { SideBar } from "../components/SideBar";
 
 function App() {
   // TODO: ADD MAVLINK TERMINAL SUPPORT
@@ -60,7 +59,7 @@ function App() {
       const response = await fetch(`${baseUrl}/${drone.connectionString}/drone_info`);
       const data = await response.json();
       setDrones(drones.map((d) => {
-        if (d.id === drone.id) {
+        if (d.connectionString === drone.connectionString) {
           const position_delta = { x: data.position.x - d.info.position.x, y: data.position.y - d.info.position.y, z: data.position.z - d.info.position.z };
           return { ...d, info: data, worldPosition: { x: d.worldPosition.x + position_delta.x, y: d.worldPosition.y + position_delta.y, z: d.worldPosition.z + position_delta.z } };  
         }
@@ -70,20 +69,21 @@ function App() {
     catch (error) {
       console.error('Error fetching data:', error);
     }
-  }
+  } 
 
-  const disconnectDrone = async (id: string) => {
-    var response = await fetch(`${baseUrl}/${id}/disconnect`);
+  const disconnectDrone = async (connectionString: string) => {
+    var response = await fetch(`${baseUrl}/${connectionString}/disconnect`);
     
     if (response.status != 200) {
       toast.error("Error disconnecting from drone");
       return;
     }
-    removeDrone(id);
+    removeDrone(connectionString);
   };
 
-  const removeDrone = (id: string) => {
-    setDrones(drones.filter((drone) => drone.id !== id));
+  const removeDrone = (connectionString: string) => {
+    console.log(`Removing drone with connection string: ${connectionString}`);
+    setDrones(drones.filter((drone) => drone.connectionString !== connectionString));
   }
 
   useEffect(() => {
@@ -96,18 +96,17 @@ function App() {
   }, [drones]);
 
   return (
-    <div className="App">
-      <div className="main-interface">
-        <AddDroneForm onAddDrone={connectDrone} isFirstDrone={drones.length === 0}/>
-        <div className="drone-cards-container">
-          {drones.map((drone) => (
-            <DroneCard key={drone.id} drone={drone} removeDrone={disconnectDrone}/>
-          ))}
+      <div className="App">
+        <div className="main-interface">
+          <AddDroneForm onAddDrone={connectDrone} isFirstDrone={drones.length === 0}/>
+          <div className="drone-cards-container">
+            {drones.map((drone) => (
+              <DroneCard key={drone.connectionString} drone={drone} removeDrone={disconnectDrone}/>
+            ))}
+          </div>
+          <WorldMap drones={drones} />
         </div>
-        <WorldMap drones={drones} />
       </div>
-    </div>
-    
   );
 }
 

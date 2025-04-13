@@ -23,7 +23,6 @@ function WorldMap({ drones }: { drones: Drone[] }){
 
 
     useEffect(() => {
-      console.log(drones);
         const newTrajectories = { ...trajectories };
         drones.forEach((drone) => {
           const newPosition = convertNEDToXYZ(drone.worldPosition);
@@ -33,7 +32,6 @@ function WorldMap({ drones }: { drones: Drone[] }){
             newPosition.z
           );
           if (!newTrajectories[drone.id]) {
-            console.log(drone.id);
             newTrajectories[drone.id] = [];
           }
           newTrajectories[drone.id].push(positionVector);

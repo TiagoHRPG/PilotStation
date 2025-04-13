@@ -7,14 +7,18 @@ import ModeSelector from './ModeSelector';
 import { nonArmableModes, notifyExceptions } from '../utilities';
 import './DroneCard.css';
 import { Drone } from '../contexts/DronesContext';
+import { useNavigate } from 'react-router-dom';
+
 
 interface DroneCardProps {
   drone: Drone;
-  removeDrone: (id: string) => void;
+  removeDrone: (connectionString: string) => void;
 }
 
 const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
   //const { drones, removeDrone } = useDroneContext();
+
+  const navigate = useNavigate();
 
   const [modes, setModes] = useState<string[]>([]);
   const [info, setInfo] = useState(new DroneInfo());
@@ -30,7 +34,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
         return true;
     }
 
-  const handleRemoveCLick = async () => removeDrone(drone.id)
+  const handleRemoveCLick = async () => removeDrone(drone.connectionString)
 
   const handleArmClick = async () => {
 	try {
@@ -83,6 +87,10 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
     }
   };
 
+  const handleParametersClick = () => {
+    navigate(`/drone/${drone.id}/parameters`);
+  };
+
   useEffect(() => {
     fetchModes();
   }, []);
@@ -108,6 +116,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
         <button onClick={handleTakeoffClick}>Takeoff</button>
       </div>
       <DroneInfoCard info={info} />
+      <button onClick={handleParametersClick}> Parameters</button>
     </div>
   );
 };

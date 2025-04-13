@@ -1,5 +1,4 @@
 import threading
-from typing import List
 from fastapi import APIRouter, HTTPException
 import time
 import parameter_retrival
@@ -77,6 +76,12 @@ class App:
         )
 
         self.router.add_api_route(
+            path="/{connection_string}/drones_info",
+            endpoint=self.drones_info,
+            methods=["GET"]
+        )
+
+        self.router.add_api_route(
             path="/{connection_string}/drone_parameters",
             endpoint=self.drone_parameters,
             methods=["GET"]
@@ -115,9 +120,11 @@ class App:
     
     def disconnect(self, connection_string: str):
         with self.drones_lock:
-            if self.drones.get(connection_string) is not None:
-                self.drones[connection_string].disconnect()
-                self.drones.pop(connection_string)
+            if self.drones.get(connection_string) is None:
+                raise HTTPException(status_code=404, detail="Drone not connected")
+            
+            self.drones[connection_string].disconnect()
+            self.drones.pop(connection_string)
 
     
     def arm(self, connection_string: str):
@@ -199,6 +206,12 @@ class App:
     def drone_info(self, connection_string: str):
         if connection_string not in self.drones:
             raise HTTPException(status_code=400, detail="Drone not connected")
+        return self.drones[connection_string].get_drone_info()
+    
+    def drones_info(self):
+        drones_info = {}
+        for connection_string in self.drones.keys():
+            drones_info[connection_string] = self.drones[connection_string].get_drone_info()
         return self.drones[connection_string].get_drone_info()
 
     def drone_parameters(self, drone_id: str):
