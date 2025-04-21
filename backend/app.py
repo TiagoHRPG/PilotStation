@@ -1,7 +1,7 @@
 import threading
 from fastapi import APIRouter, HTTPException
 import time
-import parameter_retrival
+import parameter_retrieval
 import exceptions
 from drone import Drone
 
@@ -108,7 +108,7 @@ class App:
                 if connection_string not in self.drones:
                     self.drones[connection_string] = Drone()
                 self.drones[connection_string].connect(connection_string)
-                self.drones[connection_string].drone_parameters.parameters, _ = parameter_retrival.retrieve_all_params(self.drones[connection_string].connection)
+                self.drones[connection_string].drone_parameters.parameters, _ = parameter_retrieval.retrieve_all_params(self.drones[connection_string].connection)
         except exceptions.DroneAlreadyConnectedException as e:
             raise HTTPException(status_code=400, detail={"response": str(e), 
                                                          "type": e.__class__.__name__})
