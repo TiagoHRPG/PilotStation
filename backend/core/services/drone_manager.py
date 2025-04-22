@@ -2,8 +2,8 @@
 import threading
 import time
 from typing import Dict
-from models.drone import Drone
-import parameters.parameter_retrieval as parameter_retrieval
+from core.models.drone import Drone
+import core.parameters.parameter_retrieval as parameter_retrieval
 
 READ_FREQUENCY = 4000  # Hz
 

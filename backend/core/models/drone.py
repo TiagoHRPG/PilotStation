@@ -2,14 +2,14 @@ import queue
 import time
 import utils.exceptions as exceptions
 from pymavlink import mavutil
-import mavlink.mavlink_commands as mav
-from models.geometry import Point
-from models.enums import MavResult
-from models.telemetry.battery import BatteryStatus
-from models.telemetry.system_state import SystemBaseMode
-from models.telemetry.vfr_hud import VfrHud
-from models.telemetry.ekf_status import EkfStatus
-from parameters.drone_parameters import DroneParameters
+import core.mavlink.mavlink_commands as mav
+from core.models.geometry import Point
+from core.models.enums import MavResult
+from core.models.telemetry.battery import BatteryStatus
+from core.models.telemetry.system_state import SystemBaseMode
+from core.models.telemetry.vfr_hud import VfrHud
+from core.models.telemetry.ekf_status import EkfStatus
+from core.parameters.drone_parameters import DroneParameters
 
 class Drone:
     def __init__(self):
