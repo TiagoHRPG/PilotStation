@@ -4,10 +4,12 @@ import { toast } from 'react-toastify';
 import DroneInfoCard from './DroneInfoCard';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import ModeSelector from './ModeSelector';
-import { nonArmableModes, notifyExceptions } from '../utilities';
+import { notArmableModes } from '../utils/constants';
+import { notifyExceptions } from '../utils/exceptions';
 import './DroneCard.css';
 import { Drone } from '../contexts/DronesContext';
 import { useNavigate } from 'react-router-dom';
+import Button from './ui/Button';
 
 
 interface DroneCardProps {
@@ -27,7 +29,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
 
   function checkIfInArmableMode() {
         console.log(drone.info.mode);
-        if (nonArmableModes.includes(info.mode)) {
+        if (notArmableModes.includes(info.mode)) {
             toast.error(`${info.mode} is not armable`);
             return false;
         }
@@ -103,7 +105,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
     <div className="drone-card">
       <div className='connection-string-container'>
         <h3 className="connection-string">{drone?.connectionString}</h3>
-        <button className="remove-button" onClick={handleRemoveCLick}>Remove</button>
+        <Button variant="danger" onClick={handleRemoveCLick}>Remove</Button>
       </div>
       <ModeSelector
           modes={modes}
@@ -112,11 +114,11 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
           handleModeChange={handleModeChange}
       />
       <div className='drone-actions'>
-        <button onClick={handleArmClick}>Arm</button>
-        <button onClick={handleTakeoffClick}>Takeoff</button>
+        <Button variant="secondary" onClick={handleArmClick}>Arm</Button>
+        <Button variant="secondary" onClick={handleTakeoffClick}>Takeoff</Button>
       </div>
       <DroneInfoCard info={info} />
-      <button onClick={handleParametersClick}> Parameters</button>
+      <Button variant="secondary" onClick={handleParametersClick}> Parameters</Button>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './AddDroneForm.css';
+import Button from './ui/Button';
 
 interface AddDroneFormProps {
   onAddDrone: (connectionString: string, initialPosition: { x: number; y: number; z: number }) => void;
@@ -53,7 +54,7 @@ const AddDroneForm: React.FC<AddDroneFormProps> = ({ onAddDrone, isFirstDrone })
           />
         </div>
       )}
-      <button className="add-drone-button" onClick={handleAddDrone}>Add Drone</button>
+      <Button variant="primary" onClick={handleAddDrone}>Add Drone</Button>
     </div>
   );
 };

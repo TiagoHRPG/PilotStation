@@ -1,5 +1,6 @@
 import React from 'react';
 import './ModeSelector.css';
+import Button from './ui/Button';
 
 interface ModeSelectorProps {
   modes: string[];
@@ -27,7 +28,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
           </option>
         ))}
       </select>
-      <button className="mode-selector-button" onClick={handleModeChange}>Change Mode</button>
+      <Button variant="secondary" onClick={handleModeChange}>Change Mode</Button>
     </div>
   );
 };
