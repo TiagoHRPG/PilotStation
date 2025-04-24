@@ -1,116 +1,15 @@
-from enum import Enum
 import queue
 import time
-import exceptions
+import utils.exceptions as exceptions
 from pymavlink import mavutil
-import mavlink_commands as mav
-
-class Point:
-    def __init__(self, x: float, y: float, z: float):
-        self.x = x
-        self.y = y
-        self.z = z
-    def __dict__(self):
-        return {
-            'x': self.x,
-            'y': self.y,
-            'z': self.z
-        }
-
-class mavResult(Enum):
-    ACCEPTED = 0
-    DENIED = 2
-    FAILED = 4
-    IDLE = -1
-
-    
-class BatteryStatus:
-    def __init__(self, level: int):
-        self.level : int = level
-    
-class SystemBaseMode():
-    def __init__(self) -> None:
-        self.stabilize_mode_enabled : bool = False
-        self.auto_mode_enabled : bool = False
-
-        self.manual_input_enabled = False
-    
-    def update(self, base_mode: int) -> None:
-        # guided mode enabled flag not working properly
-        self.stabilize_mode_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_STABILIZE_ENABLED)
-        self.auto_mode_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_AUTO_ENABLED)
-        self.manual_input_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
-
-class VfrHud:
-    def __init__(self):
-        self.airspeed = 0
-        self.groundspeed = 0
-        self.heading = 0
-        self.throttle = 0
-        self.altitude = 0
-        self.climb = 0
-    
-    def update(self, msg):
-        self.airspeed = msg.airspeed
-        self.groundspeed = msg.groundspeed
-        self.heading = msg.heading
-        self.throttle = msg.throttle
-        self.altitude = msg.alt
-        self.climb = msg.climb
-    
-    def __dict__(self):
-        return {
-            'airspeed': self.airspeed,
-            'groundspeed': self.groundspeed,
-            'heading': self.heading,
-            'throttle': self.throttle,
-            'altitude': self.altitude,
-            'climb': self.climb
-        }
-
-class EkfStatusReport:
-    def __init__(self):
-        self.velocity_variance = 0
-        self.pos_horiz_variance = 0
-        self.pos_vert_variance = 0
-        self.compass_variance = 0
-    
-    def update(self, msg):
-        self.velocity_variance = msg.velocity_variance
-        self.pos_horiz_variance = msg.pos_horiz_variance
-        self.pos_vert_variance = msg.pos_vert_variance
-        self.compass_variance = msg.compass_variance
-
-    def __dict__(self) -> dict:
-        return {
-            'velocity_variance': self.velocity_variance,
-            'pos_horiz_variance': self.pos_horiz_variance,
-            'pos_vert_variance': self.pos_vert_variance,
-            'compass_variance': self.compass_variance
-        }
-
-    def is_ekf_ok(self, msg) -> bool:
-        attitude_ok = bool(msg.flags & mavutil.mavlink.EKF_ATTITUDE)
-        velocity_ok = bool(msg.flags & mavutil.mavlink.EKF_VELOCITY_HORIZ)
-        velocity_vert_ok = bool(msg.flags & mavutil.mavlink.EKF_VELOCITY_VERT)
-        pos_horiz_ok = bool(msg.flags & mavutil.mavlink.EKF_POS_HORIZ_REL)
-        pred_pos_horiz_ok = bool(msg.flags & mavutil.mavlink.EKF_PRED_POS_HORIZ_REL)
-
-        return attitude_ok and velocity_ok and velocity_vert_ok and pos_horiz_ok and pred_pos_horiz_ok
-
-class DroneParameters:
-    def __init__(self):
-        self.parameters : dict = dict()
-
-    def update(self, msg):
-        self.parameters[msg.param_id] = msg.param_value
-
-    def param_count(self):
-        return len(self.parameters)
-
-    def __dict__(self):
-        return self.parameters
-    
+import core.mavlink.mavlink_commands as mav
+from core.models.geometry import Point
+from core.models.enums import MavResult
+from core.models.telemetry.battery import BatteryStatus
+from core.models.telemetry.system_state import SystemBaseMode
+from core.models.telemetry.vfr_hud import VfrHud
+from core.models.telemetry.ekf_status import EkfStatus
+from core.parameters.drone_parameters import DroneParameters
 
 class Drone:
     def __init__(self):
@@ -134,7 +33,7 @@ class Drone:
             'yaw': 0
         }
 
-        self.ekf_status_report = EkfStatusReport()
+        self.ekf_status_report = EkfStatus()
         self.ekf_ok = False
         
         self.battery_status = BatteryStatus(100)
@@ -142,9 +41,9 @@ class Drone:
         self.drone_parameters = DroneParameters()
 
         # commands ack
-        self.armed_ack : mavResult = mavResult.IDLE
-        self.takeoff_ack : mavResult = mavResult.IDLE
-        self.set_mode_ack : mavResult = mavResult.IDLE        
+        self.armed_ack : MavResult = MavResult.IDLE
+        self.takeoff_ack : MavResult = MavResult.IDLE
+        self.set_mode_ack : MavResult = MavResult.IDLE        
     @property
     def armed(self):   
         return self._armed
@@ -181,11 +80,11 @@ class Drone:
             self.ekf_ok = self.ekf_status_report.is_ekf_ok(msg)
         elif msg.get_type() == 'COMMAND_ACK':
             if msg.command == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM:
-                self.armed_ack = mavResult(msg.result)
+                self.armed_ack = MavResult(msg.result)
             elif msg.command == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF:
-                self.takeoff_ack =  mavResult(msg.result)
+                self.takeoff_ack =  MavResult(msg.result)
             elif msg.command == mavutil.mavlink.MAV_CMD_DO_SET_MODE:
-                self.set_mode_ack = mavResult(msg.result)
+                self.set_mode_ack = MavResult(msg.result)
         elif msg.get_type() == 'PARAM_VALUE':
             self.drone_parameters.update(msg)
 
@@ -198,7 +97,7 @@ class Drone:
             self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string)
             heartbeat_response = self.connection.wait_heartbeat(timeout=3)
             if heartbeat_response is None:
-                self.connecttion = None
+                self.connection = None
                 raise exceptions.ACKTimeoutException("Timeout waiting for heartbeat")
             
             self.connected = True
@@ -215,11 +114,11 @@ class Drone:
     def __wait_arm_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.armed_ack == mavResult.ACCEPTED:
-                self.armed_ack = mavResult.IDLE
+            if self.armed_ack == MavResult.ACCEPTED:
+                self.armed_ack = MavResult.IDLE
                 return
-            elif self.armed_ack in [mavResult.FAILED, mavResult.DENIED]:
-                self.armed_ack = mavResult.IDLE
+            elif self.armed_ack in [MavResult.FAILED, MavResult.DENIED]:
+                self.armed_ack = MavResult.IDLE
                 raise exceptions.CommandFailedException("Arming failed")
             time.sleep(0.1)
 
@@ -228,11 +127,11 @@ class Drone:
     def __wait_takeoff_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.takeoff_ack == mavResult.ACCEPTED:
-                self.takeoff_ack = mavResult.IDLE
+            if self.takeoff_ack == MavResult.ACCEPTED:
+                self.takeoff_ack = MavResult.IDLE
                 return
-            elif self.takeoff_ack in [mavResult.FAILED, mavResult.DENIED]:
-                self.takeoff_ack = mavResult.IDLE
+            elif self.takeoff_ack in [MavResult.FAILED, MavResult.DENIED]:
+                self.takeoff_ack = MavResult.IDLE
                 raise exceptions.CommandFailedException("Takeoff failed")
             time.sleep(0.1)
 
@@ -241,11 +140,11 @@ class Drone:
     def __wait_set_mode_ack(self, timeout: float = 0.5) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.set_mode_ack == mavResult.ACCEPTED:
-                self.set_mode_ack = mavResult.IDLE
+            if self.set_mode_ack == MavResult.ACCEPTED:
+                self.set_mode_ack = MavResult.IDLE
                 return True
-            elif self.set_mode_ack in [mavResult.FAILED, mavResult.DENIED]:
-                self.set_mode_ack = mavResult.IDLE
+            elif self.set_mode_ack in [MavResult.FAILED, MavResult.DENIED]:
+                self.set_mode_ack = MavResult.IDLE
                 return False
             time.sleep(0.1)
 
@@ -264,7 +163,7 @@ class Drone:
     def arm(self) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
-        self.armed_ack = mavResult.IDLE
+        self.armed_ack = MavResult.IDLE
 
         mav.arm(self.connection)
 
@@ -273,7 +172,7 @@ class Drone:
     def takeoff(self, height: float) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
-        self.takeoff_ack = mavResult.IDLE
+        self.takeoff_ack = MavResult.IDLE
         
         mav.takeoff(self.connection, height)
 
@@ -304,7 +203,7 @@ class Drone:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
 
-        return self.parameters
+        return self.drone_parameters.get_parameters()
 
     def set_parameter(self, param_id: str, value: float) -> None:
         if self.connection is None:
@@ -320,11 +219,11 @@ class Drone:
     def get_drone_info(self):
         drone_info = {
             'battery_level': self.battery_status.level,
-            'position': self.position.__dict__(),
+            'position': self.position.to_dict(),
             'waypoint_distance': self.waypoint_distance,
             'armed': self.armed,
             'mode': self.mode,
-            'vfr': self.vfr.__dict__(),
+            'vfr': self.vfr.to_dict(),
             'attitude': self.attitude,
             'is_ekf_ok': self.ekf_ok
         }

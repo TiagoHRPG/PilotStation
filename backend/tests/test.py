@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-
-import mavlink_commands as mv
 from pymavlink import mavutil
 import time
 
