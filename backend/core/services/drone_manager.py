@@ -1,4 +1,5 @@
 # core/services/drone_manager.py
+import logging
 import threading
 import time
 from typing import Dict
@@ -40,8 +41,10 @@ class DroneManager:
                         msg = drone.connection.recv_match()
                         if msg is not None:
                             drone.update_info(msg)
-                    except:
-                        pass  # Ignorar erros na leitura de mensagens
+                    except (AttributeError, IOError) as e:
+                        logging.warning(f"Error reading MAVLink message for drone {drone}: {e}")
+                    except Exception as e:
+                        logging.error(f"Unexpected error in MAVLink message reading for drone {drone}: {e}")    
     
     def get_drone(self, connection_string: str) -> Drone:
         """Obtém um drone pelo connection_string, ou None se não existir"""
