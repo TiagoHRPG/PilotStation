@@ -8,6 +8,6 @@ class DroneParameters:
     def param_count(self):
         return len(self.parameters)
 
-    def __dict__(self):
+    def get_parameters(self):
         return self.parameters
     

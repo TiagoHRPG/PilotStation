@@ -11,7 +11,7 @@ class SystemBaseMode:
         self.auto_mode_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_AUTO_ENABLED)
         self.manual_input_enabled = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
     
-    def __dict__(self):
+    def to_dict(self):
         return {
             'stabilize_mode_enabled': self.stabilize_mode_enabled,
             'auto_mode_enabled': self.auto_mode_enabled,

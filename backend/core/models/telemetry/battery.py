@@ -5,5 +5,5 @@ class BatteryStatus:
     def update(self, msg) -> None:
         self.level = msg.level if hasattr(msg, 'level') else self.level
     
-    def __dict__(self):
+    def to_dict(self):
         return {'level': self.level}

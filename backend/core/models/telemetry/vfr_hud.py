@@ -15,7 +15,7 @@ class VfrHud:
         self.altitude = msg.alt
         self.climb = msg.climb
     
-    def __dict__(self):
+    def to_dict(self):
         return {
             'airspeed': self.airspeed,
             'groundspeed': self.groundspeed,

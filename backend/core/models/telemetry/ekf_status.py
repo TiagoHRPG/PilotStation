@@ -16,7 +16,7 @@ class EkfStatus:
         self.pos_vert_variance = msg.pos_vert_variance
         self.compass_variance = msg.compass_variance
     
-    def __dict__(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Retorna um dicionário com os atributos da classe"""
         return asdict(self)
     

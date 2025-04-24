@@ -97,7 +97,7 @@ class Drone:
             self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string)
             heartbeat_response = self.connection.wait_heartbeat(timeout=3)
             if heartbeat_response is None:
-                self.connecttion = None
+                self.connection = None
                 raise exceptions.ACKTimeoutException("Timeout waiting for heartbeat")
             
             self.connected = True
@@ -203,7 +203,7 @@ class Drone:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
 
-        return self.parameters
+        return self.drone_parameters.get_parameters()
 
     def set_parameter(self, param_id: str, value: float) -> None:
         if self.connection is None:
@@ -219,11 +219,11 @@ class Drone:
     def get_drone_info(self):
         drone_info = {
             'battery_level': self.battery_status.level,
-            'position': self.position.__dict__(),
+            'position': self.position.to_dict(),
             'waypoint_distance': self.waypoint_distance,
             'armed': self.armed,
             'mode': self.mode,
-            'vfr': self.vfr.__dict__(),
+            'vfr': self.vfr.to_dict(),
             'attitude': self.attitude,
             'is_ekf_ok': self.ekf_ok
         }
