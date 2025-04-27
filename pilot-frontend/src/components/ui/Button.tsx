@@ -9,7 +9,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: ButtonSize;
   fullWidth?: boolean;
   isLoading?: boolean;
-  icon?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -18,7 +17,6 @@ const Button: React.FC<ButtonProps> = ({
   size = 'medium',
   fullWidth = false,
   isLoading = false,
-  icon,
   children,
   className = '',
   disabled,
@@ -31,7 +29,6 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading && <span className="ui-button__spinner" />}
-      {icon && <span className="ui-button__icon">{icon}</span>}
       <span className="ui-button__text">{children}</span>
     </button>
   );

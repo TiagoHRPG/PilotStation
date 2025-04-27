@@ -1,5 +1,3 @@
-
-
 export const WORLD_SIZE = 10;
 const Ground = () => {
 

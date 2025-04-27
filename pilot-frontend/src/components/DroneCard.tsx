@@ -6,10 +6,10 @@ import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
-import './DroneCard.css';
 import { Drone } from '../contexts/DronesContext';
 import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
+import Panel from './ui/Panel';
 
 
 interface DroneCardProps {
@@ -102,24 +102,24 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
   }, [drone.info]);
 
   return (
-    <div className="drone-card">
-      <div className='connection-string-container'>
-        <h3 className="connection-string">{drone?.connectionString}</h3>
+    <Panel gap='medium' padding='medium' variant='filled'>
+      <Panel direction='row' padding='none' align='center' justify='between'>
+        <h3>{drone?.connectionString}</h3>
         <Button variant="danger" onClick={handleRemoveCLick}>Remove</Button>
-      </div>
+      </Panel>
       <ModeSelector
           modes={modes}
           selectedMode={selectedMode}
           setSelectedMode={setSelectedMode}
           handleModeChange={handleModeChange}
       />
-      <div className='drone-actions'>
+      <Panel direction='row' align='stretch' justify='between' padding='none'>
         <Button variant="secondary" onClick={handleArmClick}>Arm</Button>
         <Button variant="secondary" onClick={handleTakeoffClick}>Takeoff</Button>
-      </div>
+      </Panel>
       <DroneInfoCard info={info} />
       <Button variant="secondary" onClick={handleParametersClick}> Parameters</Button>
-    </div>
+    </Panel>
   );
 };
 

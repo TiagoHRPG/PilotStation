@@ -1,6 +1,7 @@
 import React from 'react';
-import './ModeSelector.css';
 import Button from './ui/Button';
+import Panel from './ui/Panel';
+import Select from './ui/Select';
 
 interface ModeSelectorProps {
   modes: string[];
@@ -15,21 +16,23 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
   setSelectedMode,
   handleModeChange,
 }) => {
+  const options = modes.map(mode => ({
+    value: mode,
+    label: mode
+  }));
+
   return (
-    <div className="mode-selector-container">
-      <select className="mode-selector-dropdown"
+    <Panel padding='none' direction="row" gap="medium" align='stretch' justify='between'> 
+      <Select
+        options={options}
         value={selectedMode}
         onChange={(e) => setSelectedMode(e.target.value)}
-      >
-        <option value="" disabled>Select Mode</option>
-        {modes.map((mode) => (
-          <option key={mode} value={mode}>
-            {mode}
-          </option>
-        ))}
-      </select>
-      <Button variant="secondary" onClick={handleModeChange}>Change Mode</Button>
-    </div>
+        placeholder="Select Mode"
+        variant='filled'
+        size='medium'
+      />
+      <Button size="small" variant="secondary" onClick={handleModeChange}>Change Mode</Button>
+    </Panel>
   );
 };
 

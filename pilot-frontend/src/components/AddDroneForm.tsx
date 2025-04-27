@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import './AddDroneForm.css';
 import Button from './ui/Button';
+import Input from './ui/Input';
+import Panel from './ui/Panel';
 
 interface AddDroneFormProps {
   onAddDrone: (connectionString: string, initialPosition: { x: number; y: number; z: number }) => void;
@@ -10,52 +11,78 @@ interface AddDroneFormProps {
 const AddDroneForm: React.FC<AddDroneFormProps> = ({ onAddDrone, isFirstDrone }) => {
   const [connectionString, setConnectionString] = useState('');
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0, z: 0 });
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleAddDrone = () => {
+  const handleAddDrone = async () => {
     if (connectionString.trim() === '') {
       return;
     }
-    onAddDrone(connectionString, initialPosition);
-    setConnectionString('');
-    setInitialPosition({ x: 0, y: 0, z: 0 });
+
+    setIsConnecting(true);
+
+    try {
+      await onAddDrone(connectionString, initialPosition);
+      setConnectionString('');
+      setInitialPosition({ x: 0, y: 0, z: 0 });
+    } catch (error) {
+      console.error('Failed to connect drone:', error);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   return (
-    <div className="add-drone-container">
-      <input
-        type="text"
+    <Panel gap="none" align="center">
+      <Input
+        label="Connection String"
         value={connectionString}
         onChange={(e) => setConnectionString(e.target.value)}
         placeholder="Enter connection string"
-        className="add-drone-input"
+        fullWidth
+        disabled={isConnecting}
+        variant="outlined"
+        size="medium"
       />
       {!isFirstDrone && (
-        <div className="initial-position-inputs">
-          <input
+        <Panel direction="row" gap="medium">
+          <Input
+            label="X Position"
             type="number"
-            value={initialPosition.x}
-            onChange={(e) => setInitialPosition({ ...initialPosition, x: parseFloat(e.target.value) })}
+            value={initialPosition.x.toString()}
+            onChange={(e) => setInitialPosition({ ...initialPosition, x: parseFloat(e.target.value) || 0 })}
             placeholder="X"
-            className="initial-position-input"
+            disabled={isConnecting}
+            size="small"
           />
-          <input
+          <Input
+            label="Y Position"
             type="number"
-            value={initialPosition.y}
-            onChange={(e) => setInitialPosition({ ...initialPosition, y: parseFloat(e.target.value) })}
+            value={initialPosition.y.toString()}
+            onChange={(e) => setInitialPosition({ ...initialPosition, y: parseFloat(e.target.value) || 0 })}
             placeholder="Y"
-            className="initial-position-input"
+            disabled={isConnecting}
+            size="small"
           />
-          <input
+          <Input
+            label="Z Position"
             type="number"
-            value={initialPosition.z}
-            onChange={(e) => setInitialPosition({ ...initialPosition, z: parseFloat(e.target.value) })}
+            value={initialPosition.z.toString()}
+            onChange={(e) => setInitialPosition({ ...initialPosition, z: parseFloat(e.target.value) || 0 })}
             placeholder="Z"
-            className="initial-position-input"
+            disabled={isConnecting}
+            size="small"
           />
-        </div>
+        </Panel>
       )}
-      <Button variant="primary" onClick={handleAddDrone}>Add Drone</Button>
-    </div>
+      <Button 
+        variant="primary" 
+        onClick={handleAddDrone}
+        isLoading={isConnecting}
+        disabled={connectionString.trim() === '' || isConnecting}
+      >
+        {isConnecting ? 'Connecting...' : 'Add Drone'}
+      </Button>
+    </Panel>
   );
 };
 
