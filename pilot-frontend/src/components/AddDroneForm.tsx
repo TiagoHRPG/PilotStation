@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Panel from './ui/Panel';
+import { useDronesStore } from '../store/droneStore';
 
 interface AddDroneFormProps {
-  onAddDrone: (connectionString: string, initialPosition: { x: number; y: number; z: number }) => void;
   isFirstDrone: boolean;
 }
 
-const AddDroneForm: React.FC<AddDroneFormProps> = ({ onAddDrone, isFirstDrone }) => {
+const AddDroneForm: React.FC<AddDroneFormProps> = ({ isFirstDrone }) => {
+  const { connectDrone } = useDronesStore();
   const [connectionString, setConnectionString] = useState('');
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0, z: 0 });
   const [isConnecting, setIsConnecting] = useState(false);
@@ -21,7 +22,7 @@ const AddDroneForm: React.FC<AddDroneFormProps> = ({ onAddDrone, isFirstDrone })
     setIsConnecting(true);
 
     try {
-      await onAddDrone(connectionString, initialPosition);
+      await connectDrone(connectionString, initialPosition);
       setConnectionString('');
       setInitialPosition({ x: 0, y: 0, z: 0 });
     } catch (error) {

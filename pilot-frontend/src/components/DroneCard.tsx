@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import baseUrl from '../api/api';
 import { toast } from 'react-toastify';
 import DroneInfoCard from './DroneInfoCard';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
-import { Drone } from '../contexts/DronesContext';
+import { Drone, useDronesStore } from '../store/droneStore';
 import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 import Panel from './ui/Panel';
+import { droneApi } from '../services/drones';
 
 
 interface DroneCardProps {
   drone: Drone;
-  removeDrone: (connectionString: string) => void;
 }
 
-const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
+const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
   //const { drones, removeDrone } = useDroneContext();
+  const { disconnectDrone } = useDronesStore();
 
   const navigate = useNavigate();
 
@@ -36,14 +36,16 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
         return true;
     }
 
-  const handleRemoveCLick = async () => removeDrone(drone.connectionString)
+  const handleRemoveCLick = async () => disconnectDrone(drone.connectionString)
 
   const handleArmClick = async () => {
 	try {
 		if (!checkIfInArmableMode()) return
-	  	var response = await fetch(`${baseUrl}/${drone.connectionString}/arm`);
-		var responseJson: Record<string, string> = (await response.json())['detail'];
-		notifyExceptions(response, responseJson);
+	  const response = await droneApi.arm(drone.connectionString);
+    const data = response.data;
+		var responseJson: Record<string, string> = data['detail'];
+
+		notifyExceptions(data, responseJson);
 	  } catch (error) {
 	  alert(`Error while arming: ${error}`);
 	}
@@ -55,9 +57,11 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
         toast.error("Drone is not armed");
         return;
       }
-      var response = await fetch(`${baseUrl}/${drone.connectionString}/takeoff/1`);
-      var responseJson: Record<string, string> = (await response.json())['detail'];
-      notifyExceptions(response, responseJson);
+      const response = await droneApi.takeoff(drone.connectionString, 1);
+      const data = response.data;
+
+      var responseJson: Record<string, string> = data['detail'];
+      notifyExceptions(data, responseJson);
 	  } 
     catch (error) {
 	    alert("Error while taking off");
@@ -66,9 +70,12 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
 
   const handleModeChange = async () => {
     try {
-      const response = await fetch(`${baseUrl}/${drone.connectionString}/set_mode/${selectedMode}`);
-      const responseJson = (await response.json())['detail'];
-      notifyExceptions(response, responseJson);
+      //const response = await fetch(`${baseUrl}/${drone.connectionString}/set_mode/${selectedMode}`);
+      const response = await droneApi.setMode(drone.connectionString, selectedMode);
+      var data = response.data;
+
+      const responseJson = data['detail'];
+      notifyExceptions(data, responseJson);
       
       if (response.status == 200) {
         toast.success(`Mode changed to ${selectedMode}`);
@@ -81,9 +88,9 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
 
   const fetchModes = async () => {
     try {
-      const response = await fetch(`${baseUrl}/${drone.connectionString}/modes`);
-      const data = await response.json();
-      setModes(data.modes);
+      const response = await droneApi.getModes(drone.connectionString);
+
+      setModes(response.data.modes);
     } catch (error) {
       console.error('Error fetching modes:', error);
     }
@@ -95,7 +102,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone, removeDrone }) => {
 
   useEffect(() => {
     fetchModes();
-  }, []);
+  }, [(modes == null)]);
 
   useEffect(() => {
     setInfo(drone.info);

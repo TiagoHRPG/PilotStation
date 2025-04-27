@@ -16,6 +16,9 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
   setSelectedMode,
   handleModeChange,
 }) => {
+  if (modes == null){
+    return <div>Loading...</div>;
+  }
   const options = modes.map(mode => ({
     value: mode,
     label: mode
