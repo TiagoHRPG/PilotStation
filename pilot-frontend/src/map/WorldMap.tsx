@@ -4,8 +4,8 @@ import Ground, { WORLD_SIZE } from "./Ground";
 import { Line, OrbitControls } from "@react-three/drei";
 import "./WorldMap.css";
 import { useEffect, useState } from "react";
-import { Drone } from "../contexts/DronesContext";
-import { convertNEDToXYZ } from "../utilities";
+import { Drone } from "../store/droneStore";
+import { convertNEDToXYZ } from "../utils/converters";
 
 // TODO: add different colors to each drone and trajectories
 const DroneObject = ({

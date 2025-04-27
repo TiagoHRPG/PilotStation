@@ -1,8 +1,5 @@
 import { toast } from "react-toastify";
 
-export const convertNEDToXYZ = (position: {x: number, y: number, z: number}) => {
-    return {x: position.y, y: -position.z, z: position.x}
-}
 
 export function notifyExceptions(response: Response, responseJson: Record<string, string>) {
     if(response.status != 200 && responseJson?.type == "DroneNotConnectedException"){
@@ -22,5 +19,3 @@ export function notifyExceptions(response: Response, responseJson: Record<string
 	}
 	return
 }
-
-export const nonArmableModes = ["AUTOTUNE", "BRAKE", "CIRCLE", "FLIP", "FOLLOW", "LAND", "RTL", "SMARTRTL", "SYSID", "AVOIDADSB"]
