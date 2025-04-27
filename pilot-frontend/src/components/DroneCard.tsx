@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import DroneInfoCard from './DroneInfoCard';
-import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
@@ -17,26 +16,23 @@ interface DroneCardProps {
 }
 
 const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
-  //const { drones, removeDrone } = useDroneContext();
   const { disconnectDrone } = useDronesStore();
 
   const navigate = useNavigate();
 
   const [modes, setModes] = useState<string[]>([]);
-  const [info, setInfo] = useState(new DroneInfo());
   const [selectedMode, setSelectedMode] = useState('');
 
 
   function checkIfInArmableMode() {
-        console.log(drone.info.mode);
-        if (notArmableModes.includes(info.mode)) {
-            toast.error(`${info.mode} is not armable`);
+        if (notArmableModes.includes(drone.info.mode)) {
+            toast.error(`${drone.info.mode} is not armable`);
             return false;
         }
         return true;
     }
 
-  const handleRemoveCLick = async () => disconnectDrone(drone.connectionString)
+  const handleRemoveClick = async () => disconnectDrone(drone.connectionString)
 
   const handleArmClick = async () => {
 	try {
@@ -53,7 +49,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
   const handleTakeoffClick = async () => {
     try {
-      if(!info.armed){
+      if(!drone.info.armed){
         toast.error("Drone is not armed");
         return;
       }
@@ -70,7 +66,6 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
   const handleModeChange = async () => {
     try {
-      //const response = await fetch(`${baseUrl}/${drone.connectionString}/set_mode/${selectedMode}`);
       const response = await droneApi.setMode(drone.connectionString, selectedMode);
       var data = response.data;
 
@@ -102,17 +97,13 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
   useEffect(() => {
     fetchModes();
-  }, [(modes == null)]);
-
-  useEffect(() => {
-    setInfo(drone.info);
-  }, [drone.info]);
+  }, [modes]);
 
   return (
     <Panel gap='medium' padding='medium' variant='filled'>
       <Panel direction='row' padding='none' align='center' justify='between'>
         <h3>{drone?.connectionString}</h3>
-        <Button variant="danger" onClick={handleRemoveCLick}>Remove</Button>
+        <Button variant="danger" onClick={handleRemoveClick}>Remove</Button>
       </Panel>
       <ModeSelector
           modes={modes}
@@ -124,7 +115,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
         <Button variant="secondary" onClick={handleArmClick}>Arm</Button>
         <Button variant="secondary" onClick={handleTakeoffClick}>Takeoff</Button>
       </Panel>
-      <DroneInfoCard info={info} />
+      <DroneInfoCard info={drone.info} />
       <Button variant="secondary" onClick={handleParametersClick}> Parameters</Button>
     </Panel>
   );
