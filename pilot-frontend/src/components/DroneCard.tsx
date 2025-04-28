@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { toast } from 'react-toastify';
 import DroneInfoCard from './DroneInfoCard';
 import ModeSelector from './ModeSelector';
@@ -19,10 +19,6 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
   const { disconnectDrone } = useDronesStore();
 
   const navigate = useNavigate();
-
-  const [modes, setModes] = useState<string[]>([]);
-  const [selectedMode, setSelectedMode] = useState('');
-
 
   function checkIfInArmableMode() {
         if (notArmableModes.includes(drone.info.mode)) {
@@ -64,40 +60,10 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 	  }
   };
 
-  const handleModeChange = async () => {
-    try {
-      const response = await droneApi.setMode(drone.connectionString, selectedMode);
-      var data = response.data;
-
-      const responseJson = data['detail'];
-      notifyExceptions(data, responseJson);
-      
-      if (response.status == 200) {
-        toast.success(`Mode changed to ${selectedMode}`);
-      }
-    } 
-    catch (error) {
-      toast.error(`Error changing mode: ${error}`);
-    }
-  };
-
-  const fetchModes = async () => {
-    try {
-      const response = await droneApi.getModes(drone.connectionString);
-
-      setModes(response.data.modes);
-    } catch (error) {
-      console.error('Error fetching modes:', error);
-    }
-  };
-
   const handleParametersClick = () => {
     navigate(`/drone/${drone.id}/parameters`);
   };
 
-  useEffect(() => {
-    fetchModes();
-  }, [modes]);
 
   return (
     <Panel gap='medium' padding='medium' variant='filled'>
@@ -106,10 +72,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
         <Button variant="danger" onClick={handleRemoveClick}>Remove</Button>
       </Panel>
       <ModeSelector
-          modes={modes}
-          selectedMode={selectedMode}
-          setSelectedMode={setSelectedMode}
-          handleModeChange={handleModeChange}
+          connectionString={drone.connectionString}
       />
       <Panel direction='row' align='stretch' justify='between' padding='none'>
         <Button variant="secondary" onClick={handleArmClick}>Arm</Button>

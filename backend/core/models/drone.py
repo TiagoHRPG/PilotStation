@@ -213,9 +213,6 @@ class Drone:
 
         self.__wait_for_param_update(0.3)
 
-        # TODO: return true or false
-        print(self.parameters[param_id] == value)
-
     def get_drone_info(self):
         drone_info = {
             'battery_level': self.battery_status.level,
