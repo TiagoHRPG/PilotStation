@@ -39,7 +39,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
 		notifyExceptions(data, responseJson);
 	  } catch (error) {
-	  alert(`Error while arming: ${error}`);
+    toast.error("Arm failed");
 	}
   };
 
@@ -56,7 +56,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
       notifyExceptions(data, responseJson);
 	  } 
     catch (error) {
-	    alert("Error while taking off");
+	    toast.error("Takeoff failed");
 	  }
   };
 

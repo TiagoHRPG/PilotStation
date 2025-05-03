@@ -35,6 +35,10 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
 
   const handleModeChange = async () => {
     try {
+      if (!selectedMode) {
+        toast.error("Please select a mode");
+        return;
+      }
       const response = await droneApi.setMode(connectionString, selectedMode);
       var data = response.data;
 
