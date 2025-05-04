@@ -14,6 +14,8 @@ from core.parameters.drone_parameters import DroneParameters
 class Drone:
     def __init__(self):
         self.connection = None
+        self.flight_logger = None
+
         self.system_base_mode = SystemBaseMode()
         self.connected = False
 
@@ -90,6 +92,8 @@ class Drone:
 
         self.mode = self.connection.flightmode
 
+        self.__log_telemetry(msg)
+
     def connect(self, connection_string: str = '') -> None:
         if self.connection is not None:
             raise exceptions.DroneAlreadyConnectedException()
@@ -105,8 +109,13 @@ class Drone:
             raise
 
     def disconnect(self) -> None:
+        if self.flight_logger:
+            self.flight_logger.log_connection_event("DISCONNECTED")
+            self.flight_logger.close()
+
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
+    
         self.connection.close()
         self.connection = None
         self.connected = False
@@ -155,7 +164,6 @@ class Drone:
         old_len_parameters = self.drone_parameters.param_count()
         while time.time() - start_time < timeout:
             if self.drone_parameters.param_count() > old_len_parameters:
-                print("param updated:", self.drone_parameters.param_count())
                 # reset timeout
                 start_time = time.time()
                 old_len_parameters = self.drone_parameters.param_count()
@@ -165,18 +173,58 @@ class Drone:
             raise exceptions.DroneNotConnectedException()
         self.armed_ack = MavResult.IDLE
 
-        mav.arm(self.connection)
-
-        self.__wait_arm_ack(0.5)
+        try:
+            mav.arm(self.connection)
+            self.__wait_arm_ack(0.5)
+            
+            if self.flight_logger is not None:
+                self.flight_logger.log_command(
+                    "ARM", 
+                    {}, 
+                    "SUCCESS", 
+                    True
+                )
+                
+            return True
+        except exceptions.CommandFailedException as e:
+            if self.flight_logger is not None:
+                self.flight_logger.log_command(
+                    "ARM", 
+                    {}, 
+                    "FAILED", 
+                    False, 
+                    error_type=e.__class__.__name__
+                )
+            raise e
 
     def takeoff(self, height: float) -> None:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
         self.takeoff_ack = MavResult.IDLE
         
-        mav.takeoff(self.connection, height)
-
-        self.__wait_takeoff_ack(0.5)
+        try:
+            mav.takeoff(self.connection, height)
+            self.__wait_takeoff_ack(0.5)
+            
+            if self.flight_logger is not None:
+                self.flight_logger.log_command(
+                    "TAKEOFF", 
+                    {}, 
+                    "SUCCESS", 
+                    True
+                )
+                
+            return True
+        except exceptions.CommandFailedException as e:
+            if self.flight_logger:
+                self.flight_logger.log_command(
+                    "TAKEOFF", 
+                    {}, 
+                    "FAILED", 
+                    False, 
+                    error_type=e.__class__.__name__
+                )
+            raise e
 
 
     def land(self) -> None:
@@ -194,10 +242,29 @@ class Drone:
         if self.connection is None:
             raise exceptions.DroneNotConnectedException()
         
-        mav.set_mode(self.connection, mode)
+        try:
+            mav.set_mode(self.connection, mode)
 
-        if not self.__wait_set_mode_ack(0.5):
-            raise exceptions.CommandFailedException(f"failed setting {mode} mode")
+            if not self.__wait_set_mode_ack(0.5):
+                raise exceptions.CommandFailedException(f"failed setting {mode} mode")
+            
+            if self.flight_logger:
+                self.flight_logger.log_command(
+                    "SET_MODE", 
+                    {'mode': mode}, 
+                    "SUCCESS", 
+                    True
+                )
+        except exceptions.CommandFailedException as e:
+            if self.flight_logger:
+                self.flight_logger.log_command(
+                    "SET_MODE", 
+                    {'mode': mode}, 
+                    "FAILED", 
+                    False, 
+                    error_type=e.__class__.__name__
+                )
+            raise e
 
     def get_all_parameters(self) -> dict:
         if self.connection is None:
@@ -213,6 +280,15 @@ class Drone:
 
         self.__wait_for_param_update(0.3)
 
+        if self.flight_logger:
+            self.flight_logger.log_parameter_change(
+                param_id, 
+                self.drone_parameters.get_parameter(param_id), 
+                value, 
+                True
+            )
+
+
     def get_drone_info(self):
         drone_info = {
             'battery_level': self.battery_status.level,
@@ -227,3 +303,21 @@ class Drone:
 
         return drone_info
     
+    def __log_telemetry(self, msg):
+        if self.flight_logger and msg.get_type() in ['LOCAL_POSITION_NED', 'VFR_HUD', 'BATTERY_STATUS', 'ATTITUDE']:
+            # Registrar apenas alguns tipos de mensagens para não sobrecarregar os logs
+            if hasattr(self, '_last_telemetry_log') and time.time() - self._last_telemetry_log < 1:
+                # Limitar a 1 log por segundo
+                return
+                
+            self._last_telemetry_log = time.time()
+            
+            self.flight_logger.log_telemetry({
+                'position': self.position.to_dict() if hasattr(self, 'position') else None,
+                'attitude': self.attitude if hasattr(self, 'attitude') else None,
+                'vfr': self.vfr.to_dict() if hasattr(self, 'vfr') else None,
+                'battery': self.battery_status.level if hasattr(self, 'battery_status') else None,
+                'armed': self.armed,
+                'mode': self.mode,
+                'ekf_ok': self.ekf_ok if hasattr(self, 'ekf_ok') else None,
+            })
