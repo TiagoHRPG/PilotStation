@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from api.routes import drone_routes
+from api.routes import log_routes
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -17,3 +18,4 @@ app.add_middleware(
 )
 
 app.include_router(drone_routes.router)
+app.include_router(log_routes.router)

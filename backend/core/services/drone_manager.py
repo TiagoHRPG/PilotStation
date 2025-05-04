@@ -1,4 +1,3 @@
-# core/services/drone_manager.py
 import logging
 import threading
 import time

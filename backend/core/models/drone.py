@@ -20,7 +20,6 @@ class Drone:
         self.connected = False
 
         self.message_queue = queue.Queue(100)
-        self.read_frequency = 1000
 
         self.position : Point = Point(0, 0, 0)  
         self.waypoint_distance = 0
@@ -113,8 +112,7 @@ class Drone:
             self.flight_logger.log_connection_event("DISCONNECTED")
             self.flight_logger.close()
 
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
     
         self.connection.close()
         self.connection = None
@@ -169,10 +167,9 @@ class Drone:
                 old_len_parameters = self.drone_parameters.param_count()
     
     def arm(self) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
-        self.armed_ack = MavResult.IDLE
+        self.__check_connection()
 
+        self.armed_ack = MavResult.IDLE
         try:
             mav.arm(self.connection)
             self.__wait_arm_ack(0.5)
@@ -198,8 +195,7 @@ class Drone:
             raise e
 
     def takeoff(self, height: float) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
         self.takeoff_ack = MavResult.IDLE
         
         try:
@@ -209,12 +205,12 @@ class Drone:
             if self.flight_logger is not None:
                 self.flight_logger.log_command(
                     "TAKEOFF", 
-                    {}, 
+                    {"height": height}, 
                     "SUCCESS", 
                     True
                 )
-                
             return True
+        
         except exceptions.CommandFailedException as e:
             if self.flight_logger:
                 self.flight_logger.log_command(
@@ -228,19 +224,15 @@ class Drone:
 
 
     def land(self) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
-        
+        self.__check_connection()
         mav.set_mode(self.connection, 'LAND')
 
     def get_available_modes(self) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
         return {'modes': list(self.connection.mode_mapping().keys())}
 
     def set_mode(self, mode: str | int) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
         
         try:
             mav.set_mode(self.connection, mode)
@@ -267,14 +259,12 @@ class Drone:
             raise e
 
     def get_all_parameters(self) -> dict:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
 
         return self.drone_parameters.get_parameters()
 
     def set_parameter(self, param_id: str, value: float) -> None:
-        if self.connection is None:
-            raise exceptions.DroneNotConnectedException()
+        self.__check_connection()
 
         self.connection.param_set_send(param_id, value)
 
@@ -321,3 +311,7 @@ class Drone:
                 'mode': self.mode,
                 'ekf_ok': self.ekf_ok if hasattr(self, 'ekf_ok') else None,
             })
+
+    def __check_connection(self):
+        if self.connection is None:
+            raise exceptions.DroneNotConnectedException()

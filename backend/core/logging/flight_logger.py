@@ -1,10 +1,7 @@
-import time
-import json
 import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from .log_writer import LogWriter, FileLogWriter
-import utils.exceptions as exceptions
 
 class FlightLogger:
     """Gerenciador central de logs de voo"""
@@ -42,14 +39,6 @@ class FlightLogger:
             "name": param_name,
             "old_value": old_value,
             "new_value": new_value,
-            "success": success
-        })
-    
-    def log_mode_change(self, old_mode: str, new_mode: str, success: bool):
-        """Registra mudanças de modo de voo"""
-        self.log_event("MODE_CHANGE", {
-            "old_mode": old_mode,
-            "new_mode": new_mode,
             "success": success
         })
     
