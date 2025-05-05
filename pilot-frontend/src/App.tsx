@@ -5,8 +5,14 @@ import AddDroneForm from "./components/AddDroneForm";
 import Panel from "./components/ui/Panel";
 
 function App() {
-  // TODO: ADD MAVLINK TERMINAL SUPPORT
-  const { drones } = useDronesStore();
+  const { drones, disconnectDrone } = useDronesStore();
+  
+  window.addEventListener('unload', () => {
+    drones.forEach(drone => {
+      disconnectDrone(drone.connectionString);
+    });
+  });
+
   return (
     <Panel gap='medium'>
       <AddDroneForm isFirstDrone={drones.length === 0}/>
