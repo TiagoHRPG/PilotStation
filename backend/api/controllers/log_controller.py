@@ -19,9 +19,6 @@ class LogController:
         log_files.extend(glob.glob(os.path.join(self.log_dir, "*.jsonl")))
         
         logs = []
-
-        print(f"Log files found: {log_files}")
-        
         for log_file in log_files:
             filename = os.path.basename(log_file)
             parts = filename.split('_')
