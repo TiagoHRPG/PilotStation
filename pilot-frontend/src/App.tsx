@@ -3,10 +3,13 @@ import WorldMap from "./map/WorldMap";
 import { useDronesStore } from "./store/droneStore";
 import AddDroneForm from "./components/AddDroneForm";
 import Panel from "./components/ui/Panel";
+import Button from "./components/ui/Button";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const { drones, disconnectDrone } = useDronesStore();
-  
+  const navigate = useNavigate();
+
   window.addEventListener('unload', () => {
     drones.forEach(drone => {
       disconnectDrone(drone.connectionString);
@@ -14,14 +17,22 @@ function App() {
   });
 
   return (
-    <Panel gap='medium'>
-      <AddDroneForm isFirstDrone={drones.length === 0}/>
-      <Panel direction='row' justify="evenly">
-        {drones.map((drone) => (
-          <DroneCard key={drone.connectionString} drone={drone}/>
-        ))}
+    <Panel direction="column" gap="large" align="center">
+      <Button 
+          variant="secondary"
+          onClick={() => navigate('/logs')}
+        >
+          View Flight Logs
+        </Button>
+      <Panel gap='medium'>
+        <AddDroneForm isFirstDrone={drones.length === 0}/>
+        <Panel direction='row' justify="evenly">
+          {drones.map((drone) => (
+            <DroneCard key={drone.connectionString} drone={drone}/>
+          ))}
+        </Panel>
+        <WorldMap drones={drones} />
       </Panel>
-      <WorldMap drones={drones} />
     </Panel>
   );
 }

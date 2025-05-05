@@ -91,7 +91,15 @@ export function LogsPage() {
 
   return (
     <Panel padding="medium" gap="medium" className="logs-page">
-      <h3>Flight Logs</h3>
+      <Panel direction="row" justify="between" align="center">
+        <h3>Flight Logs</h3>
+        <Button 
+          variant="primary" 
+          onClick={() => navigate('/')}
+        >
+          Back to Dashboard
+        </Button>
+      </Panel>
       
       <Panel direction="row" gap="medium" justify="between">
         <Input

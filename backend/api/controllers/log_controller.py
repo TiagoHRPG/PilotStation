@@ -14,7 +14,6 @@ class LogController:
     
     def get_available_logs(self, connection_string: str = None):
         """Obtém a lista de logs disponíveis"""
-        print(f"Log directory: {self.log_dir}")
         log_files = glob.glob(os.path.join(self.log_dir, "*.jsonl.gz"))
         log_files.extend(glob.glob(os.path.join(self.log_dir, "*.jsonl")))
         
