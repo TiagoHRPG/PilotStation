@@ -128,7 +128,7 @@ export function DroneParameters() {
   };
 
   const handleValueChange = (name: string, value: string) => {
-    const numValue = parseInt(value);
+    const numValue = parseFloat(value);
     const param = parameters[name];
     setParameters({
       ...parameters,
