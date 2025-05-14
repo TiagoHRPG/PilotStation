@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useDronesStore } from '../store/droneStore';
 import { parameterService, DroneParameter } from '../services/parameters';
-import Panel from '../components/ui/Panel';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+import Panel from '../components/Panel';
+import Button from '../components/Button';
+import Input from '../components/Input';
 import './DroneParameters.css';
 
 interface ParameterTableItem extends DroneParameter {
@@ -128,7 +128,7 @@ export function DroneParameters() {
   };
 
   const handleValueChange = (name: string, value: string) => {
-    const numValue = parseFloat(value);
+    const numValue = parseFloat(value) | 0;
     const param = parameters[name];
     setParameters({
       ...parameters,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Button from './ui/Button';
-import Panel from './ui/Panel';
-import Select from './ui/Select';
+import Button from '../components/Button';
+import Panel from '../components/Panel';
+import Select from '../components/Select';
 import { notifyExceptions } from '../utils/exceptions';
 import { toast } from 'react-toastify';
 import { droneApi } from '../services/drones';

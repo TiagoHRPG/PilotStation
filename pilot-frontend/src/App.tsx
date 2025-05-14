@@ -1,9 +1,9 @@
-import DroneCard from "./components/DroneCard";
+import DroneCard from "./drone/DroneCard";
 import WorldMap from "./map/WorldMap";
 import { useDronesStore } from "./store/droneStore";
-import AddDroneForm from "./components/AddDroneForm";
-import Panel from "./components/ui/Panel";
-import Button from "./components/ui/Button";
+import AddDroneForm from "./drone/AddDroneForm";
+import Panel from "./components/Panel";
+import Button from "./components/Button";
 import { useNavigate } from "react-router-dom";
 
 function App() {

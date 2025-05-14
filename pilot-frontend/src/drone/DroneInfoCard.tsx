@@ -1,13 +1,11 @@
 import React from 'react';
 import DroneInfoInterface from '../interfaces/DroneInfoInterface';
 
-
-
-interface DroneInfoCardProps {
+interface DroneInfoProps {
   info: DroneInfoInterface;
 }
 
-const DroneInfoCard: React.FC<DroneInfoCardProps> = ({ info }) => {
+const DroneInfo: React.FC<DroneInfoProps> = ({ info }) => {
   return (
     <div className="card">
         <h3>Drone Information</h3>
@@ -26,4 +24,4 @@ const DroneInfoCard: React.FC<DroneInfoCardProps> = ({ info }) => {
   );
 };
 
-export default DroneInfoCard;
+export default DroneInfo;

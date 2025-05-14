@@ -1,13 +1,13 @@
 import React from 'react';
 import { toast } from 'react-toastify';
-import DroneInfoCard from './DroneInfoCard';
+import DroneInfo from './DroneInfoCard';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
 import { Drone, useDronesStore } from '../store/droneStore';
 import { useNavigate } from 'react-router-dom';
-import Button from './ui/Button';
-import Panel from './ui/Panel';
+import Button from '../components/Button';
+import Panel from '../components/Panel';
 import { droneApi } from '../services/drones';
 
 
@@ -78,7 +78,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
         <Button variant="secondary" onClick={handleArmClick}>Arm</Button>
         <Button variant="secondary" onClick={handleTakeoffClick}>Takeoff</Button>
       </Panel>
-      <DroneInfoCard info={drone.info} />
+      <DroneInfo info={drone.info} />
       <Button variant="secondary" onClick={handleParametersClick}> Parameters</Button>
     </Panel>
   );

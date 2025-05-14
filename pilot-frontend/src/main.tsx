@@ -6,8 +6,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { DroneParameters } from './parameters/DroneParameters.tsx';
-import { LogsPage } from './pages/LogsPage.tsx';
-import { LogViewerPage } from './pages/LogViewerPage.tsx';
+import { LogsPage } from './logs/LogsPage.tsx';
+import { LogViewerPage } from './logs/LogViewerPage.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
