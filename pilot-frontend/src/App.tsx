@@ -5,16 +5,25 @@ import AddDroneForm from "./drone/AddDroneForm";
 import Panel from "./components/Panel";
 import Button from "./components/Button";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 function App() {
   const { drones, disconnectDrone } = useDronesStore();
   const navigate = useNavigate();
 
-  window.addEventListener('unload', () => {
-    drones.forEach(drone => {
-      disconnectDrone(drone.connectionString);
-    });
-  });
+  useEffect(() => {
+    const handleUnload = () => {
+      drones.forEach(drone => {
+        disconnectDrone(drone.connectionString);
+      });
+    };
+
+    window.addEventListener('unload', handleUnload);
+    
+    return () => {
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, []); 
 
   return (
     <Panel direction="column" gap="large" align="center">

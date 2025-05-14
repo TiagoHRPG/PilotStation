@@ -84,6 +84,17 @@ PilotStation consists of two main components:
      ```
    - The frontend should now be running at [http://localhost:5173](http://localhost:5173) and will automatically connect to the backend at [http://localhost:8000](http://localhost:8000).
 
+**note: If you want to use the application in a different machine in the same network, you will need a different command**
+  - Frontend
+    ```
+        npm run dev -- --host
+    ```
+  - Backend 
+    ```
+        .venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload 
+
+    ```
+
 ## Usage Guide
 
 ### Connecting to a Drone
@@ -143,4 +154,5 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## Acknowledgments
 - Built with **React**, **TypeScript**, and **Vite**.
 - 3D visualization powered by **Three.js** and **React Three Fiber**.
+- Backend built in **FastAPI** and **Python**
 - Uses **MAVLink** for drone communication.
