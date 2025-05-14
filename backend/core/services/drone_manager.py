@@ -93,7 +93,7 @@ class DroneManager:
             raise e
     
     def disconnect_drone(self, connection_string: str):
-        """Desconecta um drone e fecha seu logger"""
+        """Disconnects a drone and closes its logger"""
         drone = self.get_drone(connection_string)
         if drone:
             if hasattr(drone, 'flight_logger'):
