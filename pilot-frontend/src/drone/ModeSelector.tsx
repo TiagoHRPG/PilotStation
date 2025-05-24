@@ -4,7 +4,7 @@ import Panel from '../components/Panel';
 import Select from '../components/Select';
 import { notifyExceptions } from '../utils/exceptions';
 import { toast } from 'react-toastify';
-import { droneApi } from '../services/drones';
+import { useDronesStore } from '../store/dronesStore';
 
 interface ModeSelectorProps {
   connectionString: string;
@@ -15,6 +15,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
 }) => {
   const [modes, setModes] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState('');
+  const { getDroneModes, setDroneMode } = useDronesStore();
 
   const options = modes.map(mode => ({
     value: mode,
@@ -25,9 +26,10 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
 
   const fetchModes = async () => {
     try {
-      const response = await droneApi.getModes(connectionString);
-  
-      setModes(response.data.modes);
+      const response = await getDroneModes(connectionString);
+      const data = await response.data;
+
+      setModes(data.modes);
     } catch (error) {
       console.error('Error fetching modes:', error);
     }
@@ -39,8 +41,8 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({
         toast.error("Please select a mode");
         return;
       }
-      const response = await droneApi.setMode(connectionString, selectedMode);
-      var data = response.data;
+      const response = await setDroneMode(connectionString, selectedMode);
+      const data = await response.data;
 
       const responseJson = data['detail'];
       notifyExceptions(data, responseJson);

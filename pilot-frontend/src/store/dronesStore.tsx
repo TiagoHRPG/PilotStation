@@ -1,10 +1,10 @@
-// dronesStore.ts
 import { create } from 'zustand';
 import { toast } from 'react-toastify';
 import { v4 as uuid } from 'uuid';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
 import { ExceptionTypes } from '../enumerators/exceptionTypes';
 import { droneApi } from '../services/drones';
+import { AxiosResponse } from 'axios';
 
 const POLLING_INTERVAL = 300; 
 
@@ -20,6 +20,10 @@ interface DronesState {
   isConnecting: boolean;
   connectDrone: (connectionString: string, initialPosition: { x: number; y: number; z: number }) => Promise<void>;
   disconnectDrone: (connectionString: string) => Promise<void>;
+  armDrone: (connectionString: string) => Promise<AxiosResponse<any>>;
+  takeoffDrone: (connectionString: string, altitude: number) => Promise<AxiosResponse<any>>;
+  getDroneModes: (connectionString: string) => Promise<AxiosResponse<any>>;
+  setDroneMode: (connectionString: string, mode: string) => Promise<AxiosResponse<any>>;
   updateDroneInfo: (drone: Drone) => void;
   startPolling: () => void;
   stopPolling: () => void;
@@ -137,6 +141,22 @@ export const useDronesStore = create<DronesState>((set, get) => {
       } catch (error) {
         toast.error("Error disconnecting drone");
       }
+    },
+
+    armDrone: async (connectionString) => {
+      return await droneApi.arm(connectionString);
+    },    
+
+    takeoffDrone: async (connectionString, altitude) => {
+        return await droneApi.takeoff(connectionString, altitude);
+    },
+
+    getDroneModes: async (connectionString) => {
+      return await droneApi.getModes(connectionString);
+    },
+
+    setDroneMode: async (connectionString, mode) => {
+      return await droneApi.setMode(connectionString, mode);
     },
     
     updateDroneInfo: (drone) => {

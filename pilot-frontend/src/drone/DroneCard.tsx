@@ -4,19 +4,17 @@ import DroneInfo from './DroneInfoCard';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
-import { Drone, useDronesStore } from '../store/droneStore';
+import { Drone, useDronesStore } from '../store/dronesStore';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Panel from '../components/Panel';
-import { droneApi } from '../services/drones';
-
 
 interface DroneCardProps {
   drone: Drone;
 }
 
 const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
-  const { disconnectDrone } = useDronesStore();
+  const { disconnectDrone, armDrone, takeoffDrone } = useDronesStore();
 
   const navigate = useNavigate();
 
@@ -33,8 +31,14 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
   const handleArmClick = async () => {
 	try {
 		if (!checkIfInArmableMode()) return
-	  const response = await droneApi.arm(drone.connectionString);
-    const data = response.data;
+    const response = await armDrone(drone.connectionString);
+    const data = await response.data;
+
+    if (response.status != 200) {
+      toast.error("Arm failed");
+      return;
+    }
+
 		var responseJson: Record<string, string> = data['detail'];
 
 		notifyExceptions(data, responseJson);
@@ -49,8 +53,13 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
         toast.error("Drone is not armed");
         return;
       }
-      const response = await droneApi.takeoff(drone.connectionString, 1);
-      const data = response.data;
+      const response = await takeoffDrone(drone.connectionString, 1);
+      const data = await response.data;
+      
+      if (response.status != 200) {
+        toast.error("Takeoff failed");
+        return;
+      }
 
       var responseJson: Record<string, string> = data['detail'];
       notifyExceptions(data, responseJson);

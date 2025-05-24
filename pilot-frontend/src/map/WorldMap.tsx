@@ -4,7 +4,7 @@ import Ground, { WORLD_SIZE } from "./Ground";
 import { Line, OrbitControls } from "@react-three/drei";
 import "./WorldMap.css";
 import { useEffect, useState, useMemo } from "react";
-import { Drone } from "../store/droneStore";
+import { Drone } from "../store/dronesStore";
 import { convertNEDToXYZ } from "../utils/converters";
 
 // Predefined colors for drones and their trajectories

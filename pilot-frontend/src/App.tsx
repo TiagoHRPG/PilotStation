@@ -1,6 +1,6 @@
 import DroneCard from "./drone/DroneCard";
 import WorldMap from "./map/WorldMap";
-import { useDronesStore } from "./store/droneStore";
+import { useDronesStore } from "./store/dronesStore";
 import AddDroneForm from "./drone/AddDroneForm";
 import Panel from "./components/Panel";
 import Button from "./components/Button";

@@ -1,10 +1,7 @@
-import logging
 import os
 import json
 import gzip
 from fastapi import HTTPException
-from typing import List, Dict, Any
-from datetime import datetime
 import glob
 
 class LogController:

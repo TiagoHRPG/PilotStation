@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Panel from '../components/Panel';
-import { useDronesStore } from '../store/droneStore';
+import { useDronesStore } from '../store/dronesStore';
 
 interface AddDroneFormProps {
   isFirstDrone: boolean;

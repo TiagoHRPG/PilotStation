@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useDronesStore } from '../store/droneStore';
+import { useDronesStore } from '../store/dronesStore';
 import { parameterService, DroneParameter } from '../services/parameters';
 import Panel from '../components/Panel';
 import Button from '../components/Button';
