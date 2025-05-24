@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { toast } from 'react-toastify';
-import DroneInfoCard from './DroneInfoCard';
+import DroneInfo from './DroneInfoCard';
 import ModeSelector from './ModeSelector';
 import { notArmableModes } from '../utils/constants';
 import { notifyExceptions } from '../utils/exceptions';
 import { Drone, useDronesStore } from '../store/droneStore';
 import { useNavigate } from 'react-router-dom';
-import Button from './ui/Button';
-import Panel from './ui/Panel';
+import Button from '../components/Button';
+import Panel from '../components/Panel';
 import { droneApi } from '../services/drones';
 
 
@@ -19,10 +19,6 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
   const { disconnectDrone } = useDronesStore();
 
   const navigate = useNavigate();
-
-  const [modes, setModes] = useState<string[]>([]);
-  const [selectedMode, setSelectedMode] = useState('');
-
 
   function checkIfInArmableMode() {
         if (notArmableModes.includes(drone.info.mode)) {
@@ -43,7 +39,7 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
 		notifyExceptions(data, responseJson);
 	  } catch (error) {
-	  alert(`Error while arming: ${error}`);
+    toast.error("Arm failed");
 	}
   };
 
@@ -60,44 +56,14 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
       notifyExceptions(data, responseJson);
 	  } 
     catch (error) {
-	    alert("Error while taking off");
+	    toast.error("Takeoff failed");
 	  }
-  };
-
-  const handleModeChange = async () => {
-    try {
-      const response = await droneApi.setMode(drone.connectionString, selectedMode);
-      var data = response.data;
-
-      const responseJson = data['detail'];
-      notifyExceptions(data, responseJson);
-      
-      if (response.status == 200) {
-        toast.success(`Mode changed to ${selectedMode}`);
-      }
-    } 
-    catch (error) {
-      toast.error(`Error changing mode: ${error}`);
-    }
-  };
-
-  const fetchModes = async () => {
-    try {
-      const response = await droneApi.getModes(drone.connectionString);
-
-      setModes(response.data.modes);
-    } catch (error) {
-      console.error('Error fetching modes:', error);
-    }
   };
 
   const handleParametersClick = () => {
     navigate(`/drone/${drone.id}/parameters`);
   };
 
-  useEffect(() => {
-    fetchModes();
-  }, [modes]);
 
   return (
     <Panel gap='medium' padding='medium' variant='filled'>
@@ -106,16 +72,13 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
         <Button variant="danger" onClick={handleRemoveClick}>Remove</Button>
       </Panel>
       <ModeSelector
-          modes={modes}
-          selectedMode={selectedMode}
-          setSelectedMode={setSelectedMode}
-          handleModeChange={handleModeChange}
+          connectionString={drone.connectionString}
       />
       <Panel direction='row' align='stretch' justify='between' padding='none'>
         <Button variant="secondary" onClick={handleArmClick}>Arm</Button>
         <Button variant="secondary" onClick={handleTakeoffClick}>Takeoff</Button>
       </Panel>
-      <DroneInfoCard info={drone.info} />
+      <DroneInfo info={drone.info} />
       <Button variant="secondary" onClick={handleParametersClick}> Parameters</Button>
     </Panel>
   );

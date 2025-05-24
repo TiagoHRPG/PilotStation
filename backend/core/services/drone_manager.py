@@ -1,8 +1,8 @@
-# core/services/drone_manager.py
 import logging
 import threading
 import time
 from typing import Dict
+from core.logging.flight_logger import FlightLogger
 from core.models.drone import Drone
 import core.parameters.parameter_retrieval as parameter_retrieval
 
@@ -79,7 +79,26 @@ class DroneManager:
         drone = self.add_drone(connection_string)
         try:
             drone.connect(connection_string)
+
+            drone.flight_logger = FlightLogger(connection_string)
+            drone.flight_logger.log_connection_event("CONNECTED")
+            
             drone.drone_parameters.parameters, _ = parameter_retrieval.retrieve_all_params(drone.connection)
         except Exception as e:
+            if hasattr(drone, 'flight_logger'):
+                drone.flight_logger.log_error("CONNECTION_FAILED", str(e))
+                drone.flight_logger.close()
+
             self.remove_drone(connection_string)
             raise e
+    
+    def disconnect_drone(self, connection_string: str):
+        """Disconnects a drone and closes its logger"""
+        drone = self.get_drone(connection_string)
+        if drone:
+            if hasattr(drone, 'flight_logger'):
+                drone.flight_logger.log_connection_event("DISCONNECTED")
+                drone.flight_logger.close()
+            
+            drone.disconnect()
+            self.remove_drone(connection_string)

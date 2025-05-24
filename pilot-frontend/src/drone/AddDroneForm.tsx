@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Button from './ui/Button';
-import Input from './ui/Input';
-import Panel from './ui/Panel';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import Panel from '../components/Panel';
 import { useDronesStore } from '../store/droneStore';
 
 interface AddDroneFormProps {
