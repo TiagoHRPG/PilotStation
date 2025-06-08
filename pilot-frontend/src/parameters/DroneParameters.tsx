@@ -8,12 +8,29 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import './DroneParameters.css';
 
+import { 
+  parseParameterDefinitions, 
+  ParamDefinition,
+  getParameterUnit,
+  getParameterRange,
+  getParameterDescription,
+  hasDropdownValues,
+  getDropdownOptions,
+  getDropdownDisplayValue
+} from '../services/parameterParser';
+
+import paramDefinitions from '../assets/parameter_definitions.json';
+import Select from '../components/Select';
+
+
 interface ParameterTableItem extends DroneParameter {
     name: string;
     isEditing: boolean;
     originalValue: number;
     newValue?: number;
     hasChanged: boolean;
+    hasDropdown?: boolean;
+    dropdownOptions?: { value: string, label: string }[];
 }
 
 type ParameterDictionary = Record<string, ParameterTableItem>;
@@ -26,10 +43,15 @@ export function DroneParameters() {
   const [loading, setLoading] = useState(true);
   const [parameters, setParameters] = useState<ParameterDictionary>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [saving, setSaving] = useState(false);
-  
+  const [paramDefs, setParamDefs] = useState<Record<string, ParamDefinition>>({});
+
   // Find the current drone from our store
   const drone = drones.find(d => d.id === id);
+
+  useEffect(() => {
+    const parsedDefs = parseParameterDefinitions(paramDefinitions);
+    setParamDefs(parsedDefs);
+  }, []);
 
   async function fetchParameters() {
     try {
@@ -41,19 +63,23 @@ export function DroneParameters() {
       }
 
       const response = await parameterService.getDroneParameters(drone.connectionString);
-      console.log("Drone parameters response:", response);
-
+      console.log("here", paramDefs)
       const paramDictionary: ParameterDictionary = {};
       Object.entries(response.data).forEach(([name, value]) => {
+        const numValue = parseFloat(value as string);
+        const hasDropdown = hasDropdownValues(name, paramDefs);
+
         paramDictionary[name] = {
           name,
-          value: parseFloat(value as string),
-          originalValue: parseFloat(value as string),
+          value: numValue,
+          originalValue: numValue,
           isEditing: false,
           hasChanged: false,
-          unit: getParameterUnit(name),
-          range: getParameterRange(name),
-          description: getParameterDescription(name),
+          unit: getParameterUnit(name, paramDefs),
+          range: getParameterRange(name, paramDefs),
+          description: getParameterDescription(name, paramDefs),
+          hasDropdown, 
+          dropdownOptions: hasDropdown ? getDropdownOptions(name, paramDefs) : undefined
         };
       });
 
@@ -67,43 +93,13 @@ export function DroneParameters() {
   }
 
   useEffect(() => {
-    // If the drone isn't found, we can't continue
     if (!drone) {
       toast.error("Drone not found");
       return;
     }
     
     fetchParameters();
-  }, []);
-
-  // Helper functions to simulate metadata about parameters
-  // In a real implementation, this would come from the backend
-  function getParameterUnit(name: string): string {
-    if (name.includes("ALT")) return "m";
-    if (name.includes("SPEED")) return "m/s";
-    if (name.includes("ANGLE") || name.includes("ANG")) return "deg";
-    if (name.includes("RATE")) return "deg/s";
-    return "";
-  }
-  
-  function getParameterRange(name: string): [number, number] | undefined {
-    if (name.includes("ALT")) return [0, 100];
-    if (name.includes("SPEED")) return [0, 20];
-    if (name.includes("ANGLE")) return [-180, 180];
-    return undefined;
-  }
-  
-  function getParameterDescription(name: string): string {
-    const descriptions: Record<string, string> = {
-      "WPNAV_SPEED": "Waypoint navigation speed",
-      "PILOT_SPEED_UP": "Maximum climb rate",
-      "PILOT_SPEED_DN": "Maximum descent rate",
-      "FENCE_ALT_MAX": "Maximum altitude allowed by geofence",
-      // Add more descriptions as needed
-    };
-    
-    return descriptions[name] || "No description available";
-  }
+  }, [paramDefs]);
 
   const handleEditClick = (name: string) => {
     setParameters({
@@ -140,6 +136,20 @@ export function DroneParameters() {
     });
   };
 
+  const handleDropdownChange = (name: string, value: string) => {
+    const param = parameters[name];
+    const numValue = parseFloat(value);
+    
+    setParameters({
+      ...parameters,
+      [name]: {
+        ...param,
+        newValue: numValue,
+        hasChanged: param.originalValue !== numValue
+      }
+    });
+  };
+
   const handleSaveParameter = async (name: string) => {
     const param = parameters[name];
 
@@ -160,52 +170,6 @@ export function DroneParameters() {
     } catch (error) {
       console.error("Error updating parameter:", error);
       toast.error(`Failed to update parameter ${param.name}`);
-    }
-  };
-
-  const handleSaveAll = async () => {
-    //const changedParams = parameters.filter(p => p.hasChanged && p.newValue !== undefined);
-    const changedParams = Object.values(parameters)
-                                .filter(p => p.hasChanged && p.newValue !== undefined);
-
-    if (changedParams.length === 0) {
-      toast.info("No parameters to update");
-      return;
-    }
-    
-    setSaving(true);
-    
-    try {
-      // Process each parameter one by one
-      for (const param of changedParams) {
-        await parameterService.setParameter(
-          drone!.connectionString,
-          param.name,
-          param.newValue!
-        );
-      }
-      
-      // Update all parameters in state after successful save
-      const updatedParameters = { ...parameters };
-      
-      changedParams.forEach(param => {
-        updatedParameters[param.name] = {
-          ...param,
-          isEditing: false,
-          value: param.newValue!,
-          originalValue: param.newValue!,
-          newValue: undefined,
-          hasChanged: false
-        };
-      });
-      
-      setParameters(updatedParameters);
-      toast.success(`Updated ${changedParams.length} parameters`);
-    } catch (error) {
-      console.error("Error updating parameters:", error);
-      toast.error("Failed to update some parameters");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -242,15 +206,6 @@ export function DroneParameters() {
           onChange={(e) => setSearchTerm(e.target.value)}
           fullWidth
         />
-        
-        <Button 
-          variant="success" 
-          onClick={handleSaveAll} 
-          disabled={saving || !hasChangedParameters}
-          isLoading={saving}
-        >
-          Save All Changes
-        </Button>
       </Panel>
       
       {loading ? (
@@ -279,15 +234,27 @@ export function DroneParameters() {
                     <td>{param.name}</td>
                     <td>
                       {param.isEditing ? (
-                        <Input
-                          value={param.newValue !== undefined ? param.newValue.toString() : param.value.toString()}
-                          onChange={(e) => handleValueChange(param.name, e.target.value)}
-                          size="small"
-                          type="number"
-                          step="0.01"
-                        />
+                        param.hasDropdown ? (
+                          <Select
+                            variant='filled'
+                            options={param.dropdownOptions || []}
+                            value={param.newValue !== undefined ? param.newValue.toString() : param.value.toString()}
+                            onChange={(e) => handleDropdownChange(param.name, e.target.value)}
+                            size="small"
+                          />
+                        ) : (
+                          <Input
+                            value={param.newValue !== undefined ? param.newValue.toString() : param.value.toString()}
+                            onChange={(e) => handleValueChange(param.name, e.target.value)}
+                            size="small"
+                            type="number"
+                            step="0.01"
+                          />
+                        )
                       ) : (
-                        param.value.toFixed(2)
+                        param.hasDropdown 
+                          ? getDropdownDisplayValue(param.name, param.value, paramDefs)
+                          : param.value.toFixed(2)
                       )}
                     </td>
                     <td>{param.unit || '-'}</td>
