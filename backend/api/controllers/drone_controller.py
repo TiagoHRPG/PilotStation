@@ -11,9 +11,6 @@ class DroneController:
         try:
             self.drone_manager.connect_drone(connection_string)
             return {"message": "Connected to drone"}
-        except exceptions.DroneAlreadyConnectedException as e:
-            raise HTTPException(status_code=400, detail={"response": str(e), 
-                                                    "type": e.__class__.__name__})
         except Exception as e:
             raise HTTPException(status_code=500, detail="Could not connect to drone")
     

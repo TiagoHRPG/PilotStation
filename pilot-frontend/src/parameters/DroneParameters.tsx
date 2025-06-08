@@ -188,8 +188,6 @@ export function DroneParameters() {
     );
   }
 
-  const hasChangedParameters = Object.values(parameters).some(p => p.hasChanged);
-
   return (
     <Panel className="parameters-container" padding="medium" gap="medium">
       <Panel direction="row" justify="between" align="center">

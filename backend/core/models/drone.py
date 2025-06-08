@@ -94,10 +94,9 @@ class Drone:
         self.__log_telemetry(msg)
 
     def connect(self, connection_string: str = '') -> None:
-        if self.connection is not None:
-            raise exceptions.DroneAlreadyConnectedException()
         try:
-            self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string)
+            if self.connection is None:
+                self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string)
             heartbeat_response = self.connection.wait_heartbeat(timeout=3)
             if heartbeat_response is None:
                 self.connection = None

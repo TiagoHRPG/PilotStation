@@ -8,7 +8,7 @@ export function notifyExceptions(response: Response, responseJson: Record<string
 	if(response.status != 200 && responseJson?.type == "ACKTimeoutException"){
 		toast.warning(responseJson.response);
 	}
-	else if(response.status != 200 && responseJson?.type == "DroneAlreadyConnectedException"){
+	else if(response.status != 200){
 		toast.warning(responseJson.response);
 	}
     else if(response.status != 200 && responseJson?.type == "CommandFailedException"){

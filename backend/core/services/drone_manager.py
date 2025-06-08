@@ -82,8 +82,9 @@ class DroneManager:
 
             drone.flight_logger = FlightLogger(connection_string)
             drone.flight_logger.log_connection_event("CONNECTED")
-            
-            drone.drone_parameters.parameters, _ = parameter_retrieval.retrieve_all_params(drone.connection)
+
+            if len(drone.drone_parameters.parameters) == 0:
+                drone.drone_parameters.parameters, _ = parameter_retrieval.retrieve_all_params(drone.connection)
         except Exception as e:
             if hasattr(drone, 'flight_logger'):
                 drone.flight_logger.log_error("CONNECTION_FAILED", str(e))

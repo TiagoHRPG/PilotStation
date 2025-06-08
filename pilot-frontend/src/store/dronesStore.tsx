@@ -84,7 +84,7 @@ export const useDronesStore = create<DronesState>((set, get) => {
         const response = await droneApi.connect(connectionString);
         const data = await response.data;
         
-        if (response.status != 200 && data.detail.type != ExceptionTypes.DroneAlreadyConnectedException) {
+        if (response.status != 200 ) {
           toast.error("Error connecting to drone");
           return;
         } 
