@@ -1,0 +1,1 @@
+export const notArmableModes = ["AUTOTUNE", "BRAKE", "CIRCLE", "FLIP", "FOLLOW", "LAND", "RTL", "SMARTRTL", "SYSID", "AVOIDADSB"]
