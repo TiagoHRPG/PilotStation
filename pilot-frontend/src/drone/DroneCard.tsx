@@ -29,10 +29,14 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
   const handleRemoveClick = async () => disconnectDrone(drone.connectionString)
 
   const handleArmClick = async () => {
+  var time = new Date().getTime();
+
 	try {
 		if (!checkIfInArmableMode()) return
+    var time = new Date().getTime();
     const response = await armDrone(drone.connectionString);
     const data = await response.data;
+    console.log("Arm response time: ", new Date().getTime() - time, "ms");
 
     if (response.status != 200) {
       toast.error("Arm failed");
@@ -43,6 +47,8 @@ const DroneCard: React.FC<DroneCardProps> = ({ drone }) => {
 
 		notifyExceptions(data, responseJson);
 	  } catch (error) {
+    console.log("Arm response time: ", new Date().getTime() - time, "ms");
+
     toast.error("Arm failed");
 	}
   };

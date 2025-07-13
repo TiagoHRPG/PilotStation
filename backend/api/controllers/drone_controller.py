@@ -39,7 +39,10 @@ class DroneController:
         except exceptions.ACKTimeoutException as e:
             raise HTTPException(status_code=400, detail={"response": str(e), 
                                                     "type": e.__class__.__name__})
-    
+        except exceptions.CommandFailedException as e:
+            raise HTTPException(status_code=400, detail={"response": str(e), 
+                                                    "type": e.__class__.__name__})
+
     def takeoff(self, connection_string: str, height: float):
         """Decola o drone para a altura especificada"""
         drone = self.drone_manager.get_drone(connection_string)

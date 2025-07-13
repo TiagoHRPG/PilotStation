@@ -6,6 +6,7 @@ import Panel from "./components/Panel";
 import Button from "./components/Button";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import "./DroneCardScroll.css"; 
 
 function App() {
   const { drones, disconnectDrone } = useDronesStore();
@@ -28,18 +29,22 @@ function App() {
   return (
     <Panel direction="column" gap="large" align="center">
       <Button 
-          variant="secondary"
-          onClick={() => navigate('/logs')}
-        >
-          View Flight Logs
-        </Button>
-      <Panel gap='medium'>
+        variant="secondary"
+        onClick={() => navigate('/logs')}
+      >
+        View Flight Logs
+      </Button>
+      <Panel gap='medium' align="center">
         <AddDroneForm isFirstDrone={drones.length === 0}/>
-        <Panel direction='row' justify="evenly">
-          {drones.map((drone) => (
-            <DroneCard key={drone.connectionString} drone={drone}/>
-          ))}
-        </Panel>
+        
+        <div className="drone-cards-scrollable-container">
+          <div className="drone-cards-scroll-area">
+            {drones.map((drone) => (
+              <DroneCard key={drone.connectionString} drone={drone}/>
+            ))}
+          </div>
+        </div>
+        
         <WorldMap drones={drones} />
       </Panel>
     </Panel>

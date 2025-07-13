@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { toast } from 'react-toastify';
 import { v4 as uuid } from 'uuid';
 import { DroneInfo } from '../interfaces/DroneInfoInterface';
-import { ExceptionTypes } from '../enumerators/exceptionTypes';
 import { droneApi } from '../services/drones';
 import { AxiosResponse } from 'axios';
 
@@ -82,7 +81,6 @@ export const useDronesStore = create<DronesState>((set, get) => {
       
       try {
         const response = await droneApi.connect(connectionString);
-        const data = await response.data;
         
         if (response.status != 200 ) {
           toast.error("Error connecting to drone");
@@ -127,7 +125,7 @@ export const useDronesStore = create<DronesState>((set, get) => {
     disconnectDrone: async (connectionString) => {
       try {
         await droneApi.disconnect(connectionString);
-
+        
         set(state => ({
           drones: state.drones.filter(d => d.connectionString !== connectionString)
         }));
@@ -148,7 +146,7 @@ export const useDronesStore = create<DronesState>((set, get) => {
     },    
 
     takeoffDrone: async (connectionString, altitude) => {
-        return await droneApi.takeoff(connectionString, altitude);
+      return droneApi.takeoff(connectionString, altitude);
     },
 
     getDroneModes: async (connectionString) => {

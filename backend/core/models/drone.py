@@ -93,10 +93,47 @@ class Drone:
 
         self.__log_telemetry(msg)
 
+    def __request_data(self, command_id) -> None:
+        self.__check_connection()
+
+        message = self.connection.mav.command_long_encode(
+            self.connection.target_system, 
+            self.connection.target_component,  
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,  # ID of command to send
+            0,  
+            command_id,  # param1: Message ID to be streamed
+            1000000, # param2: Interval in microseconds
+            0,       
+            0,       
+            0,       
+            0,       
+            0        
+        )
+
+        # Send the COMMAND_LONG
+        self.connection.mav.send(message)    
+
+    def request_info(self) -> None:
+        self.__check_connection()
+
+        request_messages_id = [
+            mavutil.mavlink.MAVLINK_MSG_ID_LOCAL_POSITION_NED,
+            mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD,
+            mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS,
+            mavutil.mavlink.MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT,
+            mavutil.mavlink.MAVLINK_MSG_ID_EKF_STATUS_REPORT,
+            mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE
+        ]
+        
+        for message_id in request_messages_id:
+            self.__request_data(message_id)
+
+
     def connect(self, connection_string: str = '') -> None:
         try:
             if self.connection is None:
-                self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string)
+
+                self.connection : mavutil.mavserial = mavutil.mavlink_connection(connection_string.replace('_','/'))
             heartbeat_response = self.connection.wait_heartbeat(timeout=3)
             if heartbeat_response is None:
                 self.connection = None
@@ -172,7 +209,7 @@ class Drone:
         try:
             mav.arm(self.connection)
             self.__wait_arm_ack(0.5)
-            
+
             if self.flight_logger is not None:
                 self.flight_logger.log_command(
                     "ARM", 
@@ -183,6 +220,16 @@ class Drone:
                 
             return True
         except exceptions.CommandFailedException as e:
+            if self.flight_logger is not None:
+                self.flight_logger.log_command(
+                    "ARM", 
+                    {}, 
+                    "FAILED", 
+                    False, 
+                    error_type=e.__class__.__name__
+                )
+            raise e
+        except exceptions.ACKTimeoutException as e:
             if self.flight_logger is not None:
                 self.flight_logger.log_command(
                     "ARM", 
